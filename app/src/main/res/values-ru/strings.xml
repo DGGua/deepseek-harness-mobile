@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">Полный доступ</string>
     <string name="permission_preset_auto">Автопроверка</string>
     <string name="permission_preset_auto_desc">Запуск без песочницы после экспериментальной проверки той же моделью каждого вызова встроенного инструмента и внутреннего вызова PTC.</string>
+    <string name="hostswitcher_title">Бэкенды</string>
+    <string name="hostswitcher_empty">Других сохранённых бэкендов нет. Подключитесь к одному с экрана подключения, и он появится здесь.</string>
+    <string name="hostswitcher_current">Текущий</string>
+    <string name="hostswitcher_connecting">Подключение</string>
+    <string name="hostswitcher_relay">Релей</string>
+    <string name="hostswitcher_forget">Забыть этот бэкенд</string>
+    <string name="hostswitcher_add">Добавить бэкенд</string>
+    <string name="hostswitcher_add_hint">Простой хост или host:port. Вставьте ссылку, которую печатает dsh web (с токеном), чтобы войти при добавлении.</string>
+    <string name="hostswitcher_invalid">Недопустимый для подключения адрес</string>
+    <string name="hostswitcher_rename">Переименовать бэкенд</string>
+    <string name="hostswitcher_address">Адрес</string>
+    <string name="hostswitcher_port">Порт</string>
+    <string name="hostswitcher_paste">Вставить</string>
 </resources>

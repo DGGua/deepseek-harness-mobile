@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">Acceso completo</string>
     <string name="permission_preset_auto">Revisión automática</string>
     <string name="permission_preset_auto_desc">Ejecuta sin zona de pruebas tras una revisión experimental del mismo modelo de cada llamada de herramienta nativa y llamada interna PTC.</string>
+    <string name="hostswitcher_title">Servidores</string>
+    <string name="hostswitcher_empty">No hay otros servidores recordados. Conéctate a uno desde la pantalla de conexión para añadirlo aquí.</string>
+    <string name="hostswitcher_current">Actual</string>
+    <string name="hostswitcher_connecting">Conectando</string>
+    <string name="hostswitcher_relay">Relé</string>
+    <string name="hostswitcher_forget">Olvidar este servidor</string>
+    <string name="hostswitcher_add">Añadir servidor</string>
+    <string name="hostswitcher_add_hint">Host solo o host:puerto. Pega el enlace que imprime dsh web, con el token, para iniciar sesión al añadirlo.</string>
+    <string name="hostswitcher_invalid">Dirección no conectable</string>
+    <string name="hostswitcher_rename">Renombrar servidor</string>
+    <string name="hostswitcher_address">Dirección</string>
+    <string name="hostswitcher_port">Puerto</string>
+    <string name="hostswitcher_paste">Pegar</string>
 </resources>

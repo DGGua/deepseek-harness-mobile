@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">Acesso total</string>
     <string name="permission_preset_auto">Revisão automática</string>
     <string name="permission_preset_auto_desc">Executa sem um sandbox após uma revisão experimental do mesmo modelo de cada chamada de ferramenta nativa e chamada interna PTC.</string>
+    <string name="hostswitcher_title">Backends</string>
+    <string name="hostswitcher_empty">Nenhum outro backend lembrado. Conecte-se a um pela tela de conexão para adicioná-lo aqui.</string>
+    <string name="hostswitcher_current">Atual</string>
+    <string name="hostswitcher_connecting">Conectando</string>
+    <string name="hostswitcher_relay">Relay</string>
+    <string name="hostswitcher_forget">Esquecer este backend</string>
+    <string name="hostswitcher_add">Adicionar backend</string>
+    <string name="hostswitcher_add_hint">Host simples ou host:port. Cole o link que o dsh web imprime, com o token, para entrar ao adicionar.</string>
+    <string name="hostswitcher_invalid">Endereço não conectável</string>
+    <string name="hostswitcher_rename">Renomear backend</string>
+    <string name="hostswitcher_address">Endereço</string>
+    <string name="hostswitcher_port">Porta</string>
+    <string name="hostswitcher_paste">Colar</string>
 </resources>

@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">وصول كامل</string>
     <string name="permission_preset_auto">مراجعة تلقائية</string>
     <string name="permission_preset_auto_desc">يعمل بدون صندوق حماية بعد مراجعة تجريبية من نفس النموذج لكل استدعاء أداة أصلي وكل استدعاء PTC داخلي.</string>
+    <string name="hostswitcher_title">الخوادم الخلفية</string>
+    <string name="hostswitcher_empty">لا توجد خوادم خلفية أخرى محفوظة. اتصل بأحدها من شاشة الاتصال لإضافته هنا.</string>
+    <string name="hostswitcher_current">الحالي</string>
+    <string name="hostswitcher_connecting">جارٍ الاتصال</string>
+    <string name="hostswitcher_relay">وسيط</string>
+    <string name="hostswitcher_forget">نسيان هذا الخادم</string>
+    <string name="hostswitcher_add">إضافة خادم</string>
+    <string name="hostswitcher_add_hint">عنوان مجرد أو host:port. الصق الرابط الذي يطبعه dsh web مع الرمز لتسجيل الدخول عند الإضافة.</string>
+    <string name="hostswitcher_invalid">عنوان غير صالح للاتصال</string>
+    <string name="hostswitcher_rename">إعادة تسمية الخادم</string>
+    <string name="hostswitcher_address">العنوان</string>
+    <string name="hostswitcher_port">المنفذ</string>
+    <string name="hostswitcher_paste">لصق</string>
 </resources>

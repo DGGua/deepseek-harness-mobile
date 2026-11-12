@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">সম্পূর্ণ অ্যাক্সেস</string>
     <string name="permission_preset_auto">স্বয়ংক্রিয় পর্যালোচনা</string>
     <string name="permission_preset_auto_desc">প্রতিটি নেটিভ টুল কল এবং PTC অভ্যন্তরীণ কলের আগে একই মডেলের পরীক্ষামূলক পর্যালোচনার পরে স্যান্ডবক্স ছাড়াই চলে।</string>
+    <string name="hostswitcher_title">ব্যাকএন্ড</string>
+    <string name="hostswitcher_empty">অন্য কোনো সংরক্ষিত ব্যাকএন্ড নেই। এখানে যোগ করতে কানেক্ট স্ক্রিন থেকে একটির সাথে সংযোগ করুন।</string>
+    <string name="hostswitcher_current">বর্তমান</string>
+    <string name="hostswitcher_connecting">সংযোগ হচ্ছে</string>
+    <string name="hostswitcher_relay">রিলে</string>
+    <string name="hostswitcher_forget">ব্যাকএন্ড ভুলে যান</string>
+    <string name="hostswitcher_add">ব্যাকএন্ড যোগ করুন</string>
+    <string name="hostswitcher_add_hint">শুধু হোস্ট বা host:port। dsh web যে লিংক ছাপে, টোকেনসহ পেস্ট করুন—যোগ করার সময়ই সাইন-ইন হবে।</string>
+    <string name="hostswitcher_invalid">সংযোগযোগ্য ঠিকানা নয়</string>
+    <string name="hostswitcher_rename">ব্যাকএন্ড পুনঃনামকরণ</string>
+    <string name="hostswitcher_address">ঠিকানা</string>
+    <string name="hostswitcher_port">পোর্ট</string>
+    <string name="hostswitcher_paste">পেস্ট</string>
 </resources>

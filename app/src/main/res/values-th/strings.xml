@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">เข้าถึงทั้งหมด</string>
     <string name="permission_preset_auto">ตรวจสอบอัตโนมัติ</string>
     <string name="permission_preset_auto_desc">รันโดยไม่มีแซนด์บ็อกซ์ หลังจากการตรวจสอบเชิงทดลองโดยโมเดลเดียวกันสำหรับการเรียกใช้เครื่องมือเนทีฟและการเรียก PTC ภายในทุกครั้ง</string>
+    <string name="hostswitcher_title">แบ็กเอนด์</string>
+    <string name="hostswitcher_empty">ยังไม่มีแบ็กเอนด์อื่นที่จดจำไว้ เชื่อมต่อจากหน้าเชื่อมต่อเพื่อเพิ่มที่นี่</string>
+    <string name="hostswitcher_current">ปัจจุบัน</string>
+    <string name="hostswitcher_connecting">กำลังเชื่อมต่อ</string>
+    <string name="hostswitcher_relay">รีเลย์</string>
+    <string name="hostswitcher_forget">ลืมแบ็กเอนด์นี้</string>
+    <string name="hostswitcher_add">เพิ่มแบ็กเอนด์</string>
+    <string name="hostswitcher_add_hint">โฮสต์เปล่า หรือ host:port วางลิงก์ที่ dsh web พิมพ์ พร้อมโทเคน เพื่อลงชื่อเข้าใช้ตอนเพิ่ม</string>
+    <string name="hostswitcher_invalid">ไม่ใช่ที่อยู่ที่เชื่อมต่อได้</string>
+    <string name="hostswitcher_rename">เปลี่ยนชื่อแบ็กเอนด์</string>
+    <string name="hostswitcher_address">ที่อยู่</string>
+    <string name="hostswitcher_port">พอร์ต</string>
+    <string name="hostswitcher_paste">วาง</string>
 </resources>

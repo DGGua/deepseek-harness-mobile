@@ -540,4 +540,17 @@
     <string name="permission_preset_full_access">مکمل رسائی</string>
     <string name="permission_preset_auto">خودکار جائزہ</string>
     <string name="permission_preset_auto_desc">ہر نیٹو ٹول کال اور PTC اندرونی کال سے پہلے ایک ہی ماڈل کا تجرباتی جائزہ لینے کے بعد بغیر سیٹ باکس کے چلتا ہے۔</string>
+    <string name="hostswitcher_title">بیک اینڈز</string>
+    <string name="hostswitcher_empty">کوئی اور محفوظ بیک اینڈ نہیں۔ یہاں شامل کرنے کے لیے کنیکٹ اسکرین سے ایک سے جڑیں۔</string>
+    <string name="hostswitcher_current">موجودہ</string>
+    <string name="hostswitcher_connecting">جڑ رہا ہے</string>
+    <string name="hostswitcher_relay">ریلے</string>
+    <string name="hostswitcher_forget">بیک اینڈ بھول جائیں</string>
+    <string name="hostswitcher_add">بیک اینڈ شامل کریں</string>
+    <string name="hostswitcher_add_hint">صرف ہوسٹ یا host:port۔ dsh web جو لنک چھاپتا ہے ٹوکن سمیت پیسٹ کریں، شامل کرتے ہی سائن اِن ہو جائیں گے۔</string>
+    <string name="hostswitcher_invalid">کنیکٹ ہونے کے قابل پتہ نہیں</string>
+    <string name="hostswitcher_rename">بیک اینڈ کا نام بدلیں</string>
+    <string name="hostswitcher_address">پتہ</string>
+    <string name="hostswitcher_port">پورٹ</string>
+    <string name="hostswitcher_paste">پیسٹ</string>
 </resources>
