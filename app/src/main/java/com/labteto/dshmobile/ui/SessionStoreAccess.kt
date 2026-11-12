@@ -3,6 +3,8 @@ package com.labteto.dshmobile.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.labteto.dshmobile.connection.ConnectionManager
+import com.labteto.dshmobile.connection.HarnessSessionStore
 import com.labteto.dshmobile.connection.HostsStore
 import com.labteto.dshmobile.data.SessionStore
 import dagger.hilt.EntryPoint
@@ -23,6 +25,8 @@ import dagger.hilt.components.SingletonComponent
 interface SessionStoreEntryPoint {
     fun sessionStore(): SessionStore
     fun hostsStore(): HostsStore
+    fun connectionManager(): ConnectionManager
+    fun harnessSessionStore(): HarnessSessionStore
 }
 
 /** Resolves the process-scoped [SessionStore] once per composition. */
@@ -45,5 +49,33 @@ internal fun rememberHostsStore(): HostsStore {
     val context = LocalContext.current.applicationContext
     return remember {
         EntryPointAccessors.fromApplication(context, SessionStoreEntryPoint::class.java).hostsStore()
+    }
+}
+
+/**
+ * Resolves the process-scoped [ConnectionManager] once per composition.
+ *
+ * For the host switcher, which drives [ConnectionManager.connect] directly — switching backends is
+ * exactly the manager's atomic disconnect-then-connect, and no ViewModel is needed to say so.
+ */
+@Composable
+internal fun rememberConnectionManager(): ConnectionManager {
+    val context = LocalContext.current.applicationContext
+    return remember {
+        EntryPointAccessors.fromApplication(context, SessionStoreEntryPoint::class.java).connectionManager()
+    }
+}
+
+/**
+ * Resolves the process-scoped [HarnessSessionStore] once per composition.
+ *
+ * For the host switcher's add form, which spends a pasted launch token on the new backend — the
+ * one-step sign-in the connect screen has always offered.
+ */
+@Composable
+internal fun rememberHarnessSessionStore(): HarnessSessionStore {
+    val context = LocalContext.current.applicationContext
+    return remember {
+        EntryPointAccessors.fromApplication(context, SessionStoreEntryPoint::class.java).harnessSessionStore()
     }
 }

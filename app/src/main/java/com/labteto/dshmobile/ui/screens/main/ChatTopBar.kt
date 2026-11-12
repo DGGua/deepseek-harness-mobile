@@ -123,6 +123,9 @@ internal fun ChatTopBar(
     workspaceEnabled: Boolean,
     /** False while no session is open, where there is no history to pick from yet. */
     historyEnabled: Boolean,
+    /** The connected backend's display name; null while none. Opens the host switcher when tapped. */
+    hostLabel: String? = null,
+    onOpenHostSwitcher: () -> Unit = {},
     modifier: Modifier = Modifier,
 ) {
     val colors = DsTheme.colors
@@ -145,6 +148,10 @@ internal fun ChatTopBar(
             // spare pixel. Weighting the chip against a weighted spacer split the space in half and
             // cut "DeepSeek-V4-Pro" down to "Deep…" on a phone that had room for all of it.
             Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
+                if (hostLabel != null) {
+                    HostChip(label = hostLabel, onClick = onOpenHostSwitcher)
+                    Spacer(Modifier.width(DsSpacing.tiny))
+                }
                 ModelChip(models = models, onClick = onOpenModels, modifier = Modifier.weight(1f, fill = false))
                 // Beside the model chip rather than next to the info button: both answer "what is
                 // this session doing", and a fixed position lets the thumb learn it instead of
@@ -361,3 +368,49 @@ private fun ChatTabRow(tab: ChatTab, onTabChange: (ChatTab) -> Unit, onOpenWorks
 
 private const val TAB_CHAT = "chat"
 private const val TAB_TRAJECTORY = "trajectory"
+
+/**
+ * The connected backend, as a chip.
+ *
+ * Same visual grammar as the model chip beside it — pill, border, press scale — so the two facts
+ * "which harness" and "which model" read as one row of switchable things. The chevron says there
+ * is a list behind it; the label is the host's remembered name, falling back to its address.
+ */
+@Composable
+private fun HostChip(label: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
+    val colors = DsTheme.colors
+    val interaction = remember { MutableInteractionSource() }
+    Row(
+        modifier = modifier
+            .pressScale(interaction)
+            .heightIn(min = 32.dp)
+            .clip(DsShapes.pillFull)
+            .background(colors.hoverSolid)
+            .border(1.dp, colors.borderL2, DsShapes.pillFull)
+            .clickable(interactionSource = interaction, indication = androidx.compose.material3.ripple(), onClick = onClick)
+            .padding(horizontal = DsSpacing.compact, vertical = DsSpacing.tiny),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(DsSpacing.tiny),
+    ) {
+        Icon(
+            Icons.Outlined.Dashboard,
+            contentDescription = null,
+            tint = colors.labelSecondary,
+            modifier = Modifier.size(12.dp),
+        )
+        Text(
+            text = label,
+            style = DsType.caption11,
+            color = colors.labelSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.widthIn(max = 120.dp),
+        )
+        Icon(
+            Icons.Filled.KeyboardArrowDown,
+            contentDescription = stringResource(R.string.hostswitcher_title),
+            tint = colors.labelTertiary,
+            modifier = Modifier.size(12.dp),
+        )
+    }
+}

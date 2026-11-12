@@ -317,6 +317,7 @@ class SessionStore @Inject constructor(
     @dagger.hilt.android.qualifiers.ApplicationContext context: android.content.Context,
     private val connectionManager: ConnectionManager,
     private val hostsStore: HostsStore,
+    private val harnessSessions: com.labteto.dshmobile.connection.HarnessSessionStore,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val lock = Any()
@@ -349,6 +350,60 @@ class SessionStore @Inject constructor(
     fun apiForHost(key: String?): DshApiClient? = if (key != null && key == activeHostKey) connectionManager.connectedApi else null
     fun muxForHost(key: String?) = if (key != null && key == activeHostKey) connectionManager.generation?.mux else null
     fun retryConnection() = connectionManager.reconnectIfNeeded()
+
+    /**
+     * Switch the active backend to [host].
+     *
+     * The manager's connect is already an atomic disconnect-then-connect, and the host-change
+     * branch of [observeConnection] clears this store's mirror of the previous host — so the
+     * switch itself is one call.
+     *
+     * Deliberately fire-and-forget on this store's own scope, NOT suspend: the switcher sheet
+     * dismisses itself the moment a target is picked, and a coroutine launched in the sheet's
+     * composition scope would be cancelled mid-connect by that very dismissal — disconnect done,
+     * new loop never started, a half-open socket and no retry. This scope outlives the sheet.
+     */
+    fun switchHost(host: com.labteto.dshmobile.connection.HostConfig) {
+        scope.launch { connectionManager.connect(host) }
+    }
+
+    /** Forget a backend on the store's scope — same outlives-the-sheet rule as [switchHost]. */
+    fun forgetHost(id: String) {
+        scope.launch { hostsStore.removeHost(id) }
+    }
+
+    /** Rename a backend on the store's scope — same outlives-the-sheet rule as [switchHost]. */
+    fun renameHost(id: String, name: String) {
+        scope.launch { hostsStore.renameHost(id, name) }
+    }
+
+    /**
+     * Remember a backend typed into the switcher's add form and switch to it.
+     *
+     * Same scope rule as [switchHost], for the same reason. [launchToken], when the pasted text
+     * carried one, is spent before connecting so a harness that demands a sign-in is signed in
+     * as part of being added.
+     */
+    fun addHost(
+        host: String,
+        port: Int,
+        useTls: Boolean,
+        basePath: String,
+        launchToken: String?,
+    ) {
+        scope.launch {
+            val config = hostsStore.rememberHost(
+                name = host,
+                host = host,
+                port = port,
+                isLoopback = host == "127.0.0.1" || host == "localhost",
+                useTls = useTls,
+                basePath = basePath,
+            )
+            launchToken?.let { harnessSessions.pair(config.id, config.baseUrl, it) }
+            connectionManager.connect(config)
+        }
+    }
 
     suspend fun <T> featureCall(feature: HarnessFeature, api: DshApiClient, call: suspend () -> RpcResult<T>): RpcResult<T> {
         val observe = featureObserver(feature)
@@ -671,6 +726,56 @@ class SessionStore @Inject constructor(
     }
 
     // ------------------------------------------------------------------ connection lifecycle
+    /**
+     * Drop every host-scoped mirror when the active host changes.
+     *
+     * `baseline()` deliberately skips its session resolver when `currentSessionId` is already set
+     * — the right call on a *reconnect*, where keeping the open session is the whole point, and
+     * the wrong call on a *switch*: that id belongs to the previous host's session list and would
+     * be opened against the new harness. Clearing it here sends the resolver down its
+     * remembered-session path (`hostsStore.lastSessionId`) for the host that was just connected.
+     *
+     * Also flushes the previous host's lists and caches: the baseline that follows replaces them,
+     * but between the switch and its arrival the drawer would otherwise show another harness's
+     * sessions under the new one's name.
+     */
+    private fun resetForHostChange() {
+        followJob?.cancel(); followJob = null
+        childFollowJob?.cancel(); childFollowJob = null
+        jobsJob?.cancel(); jobsJob = null
+        synchronized(lock) {
+            currentId = null
+            _currentSessionId.value = null
+            currentEvents.clear()
+            currentHasMore = false
+            currentBlank = true
+            currentProjections.clear()
+            currentQueue = emptyList()
+            followCursor = null
+            liveAssistant.clear()
+            sessionRows.clear()
+            runningBySession.clear()
+            titleBySession.clear()
+            presetBySession.clear()
+            workspaceRows.clear()
+            workspaceOrder.clear()
+            archived = emptySet()
+            pendingKinds.clear()
+            approvalRequests.clear()
+            emitSessionsLocked()
+            emitWorkspacesLocked()
+        }
+        _currentConversation.value = null
+        _jobs.value = emptyList()
+        _skills.value = emptyList()
+        _models.value = null
+        _subagents.value = emptyList()
+        _subagentConversation.value = null
+        _subagentMode.value = null
+        _commands.value = emptyList()
+        _pendingPermission.value = null
+    }
+
     private fun observeConnection() {
         scope.launch {
             var prev = connectionManager.state.value
@@ -679,8 +784,10 @@ class SessionStore @Inject constructor(
                     (prev.phase != state.phase && (prev.phase == ConnectionPhase.CONNECTED || state.phase == ConnectionPhase.CONNECTED))) {
                     featureAvailability.reset()
                 }
-                if (prev.host?.id != state.host?.id || prev.host?.baseUrl != state.host?.baseUrl) questionSessions.reset()
-                else if (prev.phase == ConnectionPhase.CONNECTED && state.phase != ConnectionPhase.CONNECTED) questionSessions.disconnect()
+                if (prev.host?.id != state.host?.id || prev.host?.baseUrl != state.host?.baseUrl) {
+                    resetForHostChange()
+                    questionSessions.reset()
+                } else if (prev.phase == ConnectionPhase.CONNECTED && state.phase != ConnectionPhase.CONNECTED) questionSessions.disconnect()
                 val initialConnect = !prev.hasConnected && state.hasConnected
                 val reconnect = prev.hasConnected &&
                     prev.phase == ConnectionPhase.RECONNECTING &&

@@ -112,6 +112,16 @@
     <string name="chatlist_sort_updated">Sort by last update</string>
     <string name="chatlist_sort_manual">Manual order</string>
     <string name="chatlist_open">Open chats</string>
+    <string name="hostswitcher_title">Backends</string>
+    <string name="hostswitcher_empty">No other remembered backends. Connect one from the connect screen to add it here.</string>
+    <string name="hostswitcher_current">Current</string>
+    <string name="hostswitcher_connecting">Connecting</string>
+    <string name="hostswitcher_relay">Relay</string>
+    <string name="hostswitcher_forget">Forget backend</string>
+    <string name="hostswitcher_add">Add backend</string>
+    <string name="hostswitcher_add_hint">Bare host or host:port. Paste the link dsh web prints, token included, to sign in as you add.</string>
+    <string name="hostswitcher_invalid">Not a connectable address</string>
+    <string name="hostswitcher_rename">Rename backend</string>
     <string name="chatlist_workspace_rename">Rename workspace</string>
     <string name="chatlist_workspace_delete">Remove workspace</string>
     <string name="chatlist_workspace_delete_confirm">Remove this workspace from the harness? The folder and its session logs are left untouched.</string>

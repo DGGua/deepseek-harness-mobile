@@ -92,6 +92,7 @@ fun ChatScreen(
     detailsOpen: Boolean,
 ) {
     val store = rememberSessionStore()
+    val hostsStore = com.labteto.dshmobile.ui.rememberHostsStore()
     val scope = rememberCoroutineScope()
     val colors = DsTheme.colors
     val context = LocalContext.current
@@ -128,6 +129,7 @@ fun ChatScreen(
         ?: currentSessionId.orEmpty()
 
     val connection by store.connectionState.collectAsStateWithLifecycle()
+    val rememberedHosts by hostsStore.hosts.collectAsStateWithLifecycle(initialValue = emptyList())
     val hostKey = connection.host?.let { "${it.baseUrl}|${it.id}" }.orEmpty()
     val composer = remember(hostKey, currentSessionId) {
         store.composers.get(ComposerKey(hostKey, currentSessionId.orEmpty()))
@@ -495,6 +497,12 @@ fun ChatScreen(
                 onOpenWorkspace = { panelKey = composer.key },
                 workspaceEnabled = currentSessionId != null,
                 historyEnabled = currentSessionId != null,
+                // Resolved from the remembered list rather than the connection snapshot, so a
+                // rename of the CURRENT backend updates the chip live — the snapshot's copy of
+                // the name only refreshes on the next reconnect.
+                hostLabel = rememberedHosts.firstOrNull { it.id == connection.host?.id }?.name
+                    ?: connection.host?.name,
+                onOpenHostSwitcher = { sheet = ChatSheet.HostSwitcher },
             )
 
             AnimatedPresence(connectionError) {
@@ -871,12 +879,17 @@ fun ChatScreen(
             mode = subagentMode,
             onDismiss = { sheet = null },
         )
+        ChatSheet.HostSwitcher -> HostSwitcherSheet(
+            hostsStore = hostsStore,
+            store = store,
+            onDismiss = { sheet = null },
+        )
         null -> Unit
     }
 }
 
 /** Which sheet, if any, is open over the chat surface. */
-private enum class ChatSheet { Commands, Models, History, Presets, Subagents }
+private enum class ChatSheet { Commands, Models, History, Presets, Subagents, HostSwitcher }
 
 /**
  * A picked document's display name and size, as its provider reports them.

@@ -1,6 +1,14 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
     alias(libs.plugins.kotlin.serialization)
+    application
+}
+
+application {
+    // `./gradlew :mock-harness:run --args="--port 4540 --trusted-host 10.0.2.2"` — the CLI
+    // harness the conformance suite drives, runnable standalone as a second backend for
+    // manual and on-device testing of the app.
+    mainClass.set("com.labteto.dshmobile.mockharness.MainKt")
 }
 
 java {

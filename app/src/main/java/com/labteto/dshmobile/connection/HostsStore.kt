@@ -120,7 +120,9 @@ class HostsStore @Inject constructor(
         val existing = hosts.first().firstOrNull { it.baseUrl == harnessBaseUrl(host, port, relay?.useTls ?: useTls, basePath) }
         val config = HostConfig(
             id = existing?.id ?: UUID.randomUUID().toString(),
-            name = name,
+            // A record the user has renamed keeps its name across reconnects: the label the
+            // connect flow derives from the address is only a default for a brand-new entry.
+            name = existing?.name ?: name,
             host = host,
             port = port,
             basePath = basePath,
@@ -154,6 +156,19 @@ class HostsStore @Inject constructor(
                 }
             },
         )
+    }
+
+    /**
+     * Rename a remembered backend.
+     *
+     * The name is what the switcher rows and the chat top bar's host chip display, so this is the
+     * one write behind "rename" everywhere. No-op for an id that is no longer remembered — the
+     * forget action may have raced the rename, and forgetting wins.
+     */
+    suspend fun renameHost(id: String, name: String) {
+        val current = hosts.first()
+        if (current.none { it.id == id }) return
+        persist(current.map { if (it.id == id) it.copy(name = name) else it })
     }
 
     /**
