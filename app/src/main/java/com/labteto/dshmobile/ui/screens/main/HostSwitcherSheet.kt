@@ -23,8 +23,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -53,6 +51,7 @@ import com.labteto.dshmobile.ui.components.DsButton
 import com.labteto.dshmobile.ui.components.DsButtonVariant
 import com.labteto.dshmobile.ui.components.DsIconButton
 import com.labteto.dshmobile.ui.components.DsPill
+import com.labteto.dshmobile.ui.screens.connect.InkTextField
 import com.labteto.dshmobile.ui.theme.DsShapes
 import com.labteto.dshmobile.ui.theme.DsSpacing
 import com.labteto.dshmobile.ui.theme.DsTheme
@@ -226,26 +225,24 @@ private fun HostSwitcherAddForm(
     }
 
     Column(verticalArrangement = Arrangement.spacedBy(DsSpacing.small)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            val clipboard = LocalClipboardManager.current
-            TextField(
+        val clipboard = LocalClipboardManager.current
+        Row(verticalAlignment = Alignment.Bottom) {
+            InkTextField(
                 value = address,
                 onValueChange = { address = it; invalid = false },
                 modifier = Modifier.weight(1f),
-                placeholder = { Text("10.0.2.2:3080", style = DsType.std14) },
-                singleLine = true,
-                label = { Text(stringResource(R.string.connect_host_label)) },
-                colors = fieldColors(),
+                label = stringResource(R.string.hostswitcher_address),
+                placeholder = "10.0.2.2:3080",
                 keyboardOptions = KeyboardOptions(
                     keyboardType = KeyboardType.Uri,
                     autoCorrectEnabled = false,
                     imeAction = ImeAction.Go,
                 ),
                 keyboardActions = KeyboardActions(onGo = { submit() }),
-                trailingIcon = {
+                trailing = {
                     DsIconButton(
                         icon = Icons.Outlined.ContentPaste,
-                        contentDescription = stringResource(R.string.connect_paste),
+                        contentDescription = stringResource(R.string.hostswitcher_paste),
                         onClick = {
                             clipboard.getText()?.text?.trim()?.takeIf { it.isNotEmpty() }?.let {
                                 address = it; invalid = false
@@ -256,15 +253,14 @@ private fun HostSwitcherAddForm(
                 },
             )
             Spacer(Modifier.width(DsSpacing.compact))
-            TextField(
+            InkTextField(
                 value = port,
                 onValueChange = { port = it.filter { c -> c.isDigit() } },
-                modifier = Modifier.width(92.dp),
-                singleLine = true,
+                modifier = Modifier.width(96.dp),
+                label = stringResource(R.string.hostswitcher_port),
+                mono = true,
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Go),
                 keyboardActions = KeyboardActions(onGo = { submit() }),
-                label = { Text(stringResource(R.string.connect_port_label)) },
-                colors = fieldColors(),
             )
         }
         if (invalid) {
@@ -289,15 +285,6 @@ private fun HostSwitcherAddForm(
         )
     }
 }
-
-@Composable
-private fun fieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor = DsTheme.colors.bgLayer1,
-    unfocusedContainerColor = DsTheme.colors.bgLayer1,
-    focusedIndicatorColor = DsTheme.colors.accent,
-    unfocusedIndicatorColor = DsTheme.colors.borderL2,
-    cursorColor = DsTheme.colors.accent,
-)
 
 @Composable
 private fun HostSwitcherRow(

@@ -3,6 +3,7 @@ package com.labteto.dshmobile.ui.screens.main
 import androidx.annotation.StringRes
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.labteto.dshmobile.R
 import com.labteto.dshmobile.core.wire.dto.AgentPresetEntry
@@ -105,19 +106,29 @@ internal fun subagentRunning(entry: SubagentListEntry): Boolean = when (entry) {
  * whatever language the client is in. The harness's own web UI covers this by overriding the
  * built-ins with its own translations, and this is the same table for the same four ids.
  *
- * Keyed on `trust == SYSTEM` exactly as the reference is: a preset someone wrote themselves and
- * happened to call `standard` is theirs, and keeps the name they gave it.
+ * `ptc` is the id harness 0.2.x ships; `code` is the id older hosts used, kept as an alias so a
+ * client talking to one of those still gets a translated row.
  */
-private fun builtInPresetStrings(id: String): Pair<Int, Int>? = when (id) {
+internal fun builtInPresetStrings(id: String): Pair<Int, Int>? = when (id) {
     "standard" -> R.string.preset_standard_name to R.string.preset_standard_desc
-    "code" -> R.string.preset_code_name to R.string.preset_code_desc
+    "ptc", "code" -> R.string.preset_code_name to R.string.preset_code_desc
     "minimal" -> R.string.preset_minimal_name to R.string.preset_minimal_desc
     "cordis" -> R.string.preset_cordis_name to R.string.preset_cordis_desc
     else -> null
 }
 
-private fun builtInPresetStrings(entry: AgentPresetEntry): Pair<Int, Int>? =
-    if (entry.trust == AgentPresetTrust.SYSTEM) builtInPresetStrings(entry.id) else null
+/**
+ * Whether a roster row is one of the shipped presets, whose copy the app owns.
+ *
+ * Harness 0.2.1 stopped sending `trust` on `agentPresets/list` — the roster is just
+ * `{id, order, isDefault}` — so every shipped preset arrives [AgentPresetTrust.UNKNOWN], and a
+ * `SYSTEM`-only gate left the picker showing raw ids (`standard`, `ptc`, …) with no descriptions
+ * at all. An id is still proof enough: a roster holds one row per id, so a preset someone authored
+ * can never answer to `standard`. `USER` stays theirs, and an unknown id has no translation to
+ * reach for anyway.
+ */
+internal fun builtInPresetStrings(entry: AgentPresetEntry): Pair<Int, Int>? =
+    if (entry.trust == AgentPresetTrust.USER) null else builtInPresetStrings(entry.id)
 
 /**
  * What to call the preset a session is pinned to, given only its id.
@@ -156,9 +167,28 @@ internal fun AgentPresetEntry.displayDescription(): String? =
 
 @Composable
 internal fun dialogTextFieldColors() = TextFieldDefaults.colors(
-    focusedContainerColor = DsTheme.colors.bgLayer1,
-    unfocusedContainerColor = DsTheme.colors.bgLayer1,
-    focusedIndicatorColor = DsTheme.colors.accent,
-    unfocusedIndicatorColor = DsTheme.colors.borderL2,
+    focusedContainerColor = DsTheme.colors.bgLayer2,
+    unfocusedContainerColor = DsTheme.colors.bgLayer2,
+    disabledContainerColor = DsTheme.colors.bgLayer1,
+    // No underline: the field's outline comes from `inkFieldFrame`, so it reads as the same plate as
+    // every other input in the app. The default underline on a rounded plate is clipped to a stub.
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
+    errorIndicatorColor = Color.Transparent,
     cursorColor = DsTheme.colors.accent,
+)
+
+/** A field that sits *inside* a composer card: no plate and no outline of its own, the card is the frame. */
+@Composable
+internal fun composerFieldColors() = TextFieldDefaults.colors(
+    focusedContainerColor = Color.Transparent,
+    unfocusedContainerColor = Color.Transparent,
+    disabledContainerColor = Color.Transparent,
+    focusedIndicatorColor = Color.Transparent,
+    unfocusedIndicatorColor = Color.Transparent,
+    disabledIndicatorColor = Color.Transparent,
+    cursorColor = DsTheme.colors.accent,
+    focusedTextColor = DsTheme.colors.labelPrimary,
+    unfocusedTextColor = DsTheme.colors.labelPrimary,
 )
