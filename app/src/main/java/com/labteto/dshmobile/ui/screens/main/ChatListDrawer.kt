@@ -9,7 +9,7 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import com.labteto.dshmobile.ui.components.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,6 +49,7 @@ import androidx.compose.material.icons.outlined.PushPin
 import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material.icons.outlined.SwapVert
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -59,6 +60,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -94,6 +96,7 @@ import com.labteto.dshmobile.data.SessionRow
 import com.labteto.dshmobile.data.SessionStore
 import com.labteto.dshmobile.data.WorkspaceRow
 import com.labteto.dshmobile.data.anchorAfterMove
+import com.labteto.dshmobile.data.archiveStopDialogFor
 import com.labteto.dshmobile.data.failureNotice
 import com.labteto.dshmobile.data.moveByStep
 import com.labteto.dshmobile.ui.components.DsButton
@@ -103,6 +106,8 @@ import com.labteto.dshmobile.ui.components.DsFilterChip
 import com.labteto.dshmobile.ui.components.DsIconButton
 import com.labteto.dshmobile.ui.components.DsIconMenu
 import com.labteto.dshmobile.ui.components.DsSearchField
+import com.labteto.dshmobile.ui.input.AppShortcut
+import com.labteto.dshmobile.ui.input.LocalShortcutRouter
 import com.labteto.dshmobile.ui.components.DsPill
 import com.labteto.dshmobile.ui.components.DsToastHost
 import com.labteto.dshmobile.ui.components.inkFieldFrame
@@ -232,6 +237,41 @@ fun ChatListDrawer(
     var newWorkspaceOpen by remember { mutableStateOf(false) }
     var newSessionOpen by remember { mutableStateOf(false) }
     var workspacesOpen by remember { mutableStateOf(false) }
+    // The built-in harness's projects: start one (empty, clone, import) and open a session in it.
+    val projectsVm: com.labteto.dshmobile.ui.screens.runtime.ProjectsViewModel = androidx.hilt.navigation.compose.hiltViewModel()
+    val projectOps = projectsVm.operations
+    val onBuiltInHarness by projectOps.onBuiltInState.collectAsStateWithLifecycle()
+    val projectJob by projectOps.job.collectAsStateWithLifecycle()
+    var projectJobShown by remember { mutableStateOf(false) }
+    var projectsPageOpen by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
+    val projectStarters = com.labteto.dshmobile.ui.screens.runtime.rememberProjectStarters(
+        projectOps,
+        open = true,
+        onStarted = {
+            newSessionOpen = false
+            projectJobShown = true
+        },
+        onCreated = {
+            newSessionOpen = false
+            onClose()
+        },
+    )
+    // Keyboard shortcuts that act on this list: Ctrl+N opens the new-session picker, Ctrl+F opens
+    // the search (and takes focus again when it is already open). The shell reveals the list first.
+    val shortcutRouter = LocalShortcutRouter.current
+    var searchFocusTick by remember { mutableIntStateOf(0) }
+    LaunchedEffect(shortcutRouter) {
+        shortcutRouter.events.collect { shortcut ->
+            when (shortcut) {
+                AppShortcut.NewSession -> newSessionOpen = true
+                AppShortcut.SearchSessions -> {
+                    searchOpen = true
+                    searchFocusTick++
+                }
+                else -> Unit
+            }
+        }
+    }
     // Subagent disclosure is independent of compact workspace expansion and keyed by host.
     val collapsed = remember(hostKey) { mutableStateMapOf<String, Boolean>() }
     val hapticsTap = { haptics.tap() }
@@ -555,6 +595,7 @@ fun ChatListDrawer(
                 onNewSession = { newSessionOpen = true },
                 onNewWorkspace = { newWorkspaceOpen = true },
                 onWorkspaces = { workspacesOpen = true },
+                onProjects = if (onBuiltInHarness) ({ projectsPageOpen = true }) else null,
                 onAutomations = onOpenAutomations,
                 onRefresh = refresh::start,
             )
@@ -619,7 +660,11 @@ fun ChatListDrawer(
                     NeedsYouCard(
                         session = session,
                         approvalTool = approval?.toolName,
-                        approvalReason = approval?.reason,
+                        // The command alone, not "Run this command?" in front of it.
+                        approvalReason = approval?.let {
+                            val prompt = com.labteto.dshmobile.core.permission.approvalPromptOf(it.toolName, it.rawReason, it.reason)
+                            prompt.detail ?: prompt.text
+                        },
                         onReview = { openSession(session.sessionId) },
                         onApprove = approval?.let {
                             approve@{
@@ -650,6 +695,7 @@ fun ChatListDrawer(
                     onValueChange = { query = it },
                     placeholder = stringResource(R.string.chatlist_search_hint),
                     autoFocus = true,
+                    focusTick = searchFocusTick,
                 )
                 // A capability note, not a failure: most harnesses ship with content search off.
                 if (!contentSearchAvailable && query.isNotBlank()) {
@@ -987,6 +1033,11 @@ fun ChatListDrawer(
         NewSessionDialog(
             workspaces = workspaces,
             homeCwd = hostInfo?.home,
+            projectStarts = if (onBuiltInHarness) projectStarters else null,
+            onManageProjects = {
+                newSessionOpen = false
+                projectsPageOpen = true
+            },
             onPick = { workspaceId ->
                 newSessionOpen = false
                 scope.launch {
@@ -1015,8 +1066,41 @@ fun ChatListDrawer(
             workspaces = workspaces,
             store = store,
             scope = scope,
+            projects = if (onBuiltInHarness) projectOps else null,
+            onProjectJob = { projectJobShown = true },
             onDismiss = { workspacesOpen = false },
         )
+    }
+
+    if (projectJobShown) {
+        val job = projectJob
+        if (job == null) {
+            projectJobShown = false
+        } else {
+            // Made from the new-session dialog: once it is done and its session is open, the drawer has done its part.
+            LaunchedEffect(job) {
+                if (job is com.labteto.dshmobile.runtime.workspace.ProjectJob.Done && onBuiltInHarness &&
+                    job.kind != com.labteto.dshmobile.runtime.workspace.JobKind.EXPORT_ZIP && job.kind != com.labteto.dshmobile.runtime.workspace.JobKind.SAVE_COPY
+                ) {
+                    projectOps.dismiss()
+                    projectJobShown = false
+                    onClose()
+                }
+            }
+            com.labteto.dshmobile.ui.screens.runtime.ProjectJobDialog(
+                projectOps,
+                job,
+                onHide = { projectJobShown = false },
+                onOpened = {
+                    projectJobShown = false
+                    onClose()
+                },
+            )
+        }
+    }
+
+    if (projectsPageOpen) {
+        com.labteto.dshmobile.ui.screens.runtime.ProjectsPage(projectOps, onClose = { projectsPageOpen = false })
     }
 }
 
@@ -1141,6 +1225,7 @@ private fun MoreMenu(
     onNewSession: () -> Unit,
     onNewWorkspace: () -> Unit,
     onWorkspaces: () -> Unit,
+    onProjects: (() -> Unit)?,
     onAutomations: () -> Unit,
     onRefresh: () -> Unit,
 ) {
@@ -1151,6 +1236,7 @@ private fun MoreMenu(
             add(MenuItem(stringResource(R.string.chatlist_new_session), icon = Icons.Filled.Add, onClick = onNewSession))
             add(MenuItem(stringResource(R.string.chatlist_new_workspace), icon = Icons.Outlined.Add, onClick = onNewWorkspace))
             add(MenuItem(stringResource(R.string.ink_chat_workspaces), icon = FeatherIcons.Folder, onClick = onWorkspaces))
+            if (onProjects != null) add(MenuItem(stringResource(R.string.projects_title), icon = FeatherIcons.Folder, onClick = onProjects))
             if (automationAvailable) {
                 add(MenuItem(stringResource(R.string.harness_automations), icon = FeatherIcons.Zap, onClick = onAutomations))
             }
@@ -1628,7 +1714,14 @@ private fun SessionRowItem(
                             },
                         )
                     } else {
-                        add(HoldAction(stringResource(R.string.chatlist_session_archive), Icons.Outlined.Archive) { archiveConfirmOpen = true })
+                        add(
+                            HoldAction(stringResource(R.string.chatlist_session_archive), Icons.Outlined.Archive) {
+                                // Work this row is known to be running goes straight to "Stop and archive";
+                                // otherwise the plain confirm, and the host's refusal still has its say.
+                                val stop = archiveStopDialogFor(session.sessionId, store.knownActivityOf(session))
+                                if (stop != null) archiveBusy = stop else archiveConfirmOpen = true
+                            },
+                        )
                     }
                 },
             )
@@ -1848,6 +1941,9 @@ private fun NewSessionDialog(
     homeCwd: String?,
     onPick: (String?) -> Unit,
     onDismiss: () -> Unit,
+    /** On the built-in harness: the ways to start a new project there. */
+    projectStarts: com.labteto.dshmobile.ui.screens.runtime.ProjectStarters? = null,
+    onManageProjects: () -> Unit = {},
 ) {
     val colors = DsTheme.colors
     DsDialog(title = stringResource(R.string.chatlist_new_session_in), onDismiss = onDismiss) {
@@ -1870,6 +1966,33 @@ private fun NewSessionDialog(
             subtitle = homeCwd,
             onClick = { onPick(null) },
         )
+        if (projectStarts != null) {
+            com.labteto.dshmobile.ui.components.SectionHeader(stringResource(R.string.projects_start_header))
+            SheetRow(
+                title = stringResource(R.string.projects_new_empty),
+                subtitle = stringResource(R.string.projects_new_empty_hint),
+                onClick = { projectStarts.request(com.labteto.dshmobile.ui.screens.runtime.ProjectStart.EMPTY) },
+            )
+            SheetRow(
+                title = stringResource(R.string.projects_clone),
+                subtitle = stringResource(R.string.projects_clone_hint),
+                onClick = { projectStarts.request(com.labteto.dshmobile.ui.screens.runtime.ProjectStart.CLONE) },
+            )
+            SheetRow(
+                title = stringResource(R.string.projects_import_folder),
+                subtitle = stringResource(R.string.projects_import_folder_hint),
+                onClick = { projectStarts.request(com.labteto.dshmobile.ui.screens.runtime.ProjectStart.FOLDER) },
+            )
+            SheetRow(
+                title = stringResource(R.string.projects_import_zip),
+                subtitle = stringResource(R.string.projects_import_zip_hint),
+                onClick = { projectStarts.request(com.labteto.dshmobile.ui.screens.runtime.ProjectStart.ZIP) },
+            )
+            SheetRow(
+                title = stringResource(R.string.projects_manage),
+                onClick = onManageProjects,
+            )
+        }
     }
 }
 
@@ -1914,10 +2037,15 @@ private fun WorkspacesDialog(
     workspaces: List<WorkspaceRow>,
     store: SessionStore,
     scope: CoroutineScope,
+    /** On the built-in harness: Files, zip and copy for a workspace under /workspaces. */
+    projects: com.labteto.dshmobile.runtime.workspace.ProjectOperations? = null,
+    onProjectJob: () -> Unit = {},
     onDismiss: () -> Unit,
 ) {
     val colors = DsTheme.colors
     var renaming by remember { mutableStateOf<WorkspaceRow?>(null) }
+    var exporting by remember { mutableStateOf<Pair<String, Boolean>?>(null) }
+    val context = androidx.compose.ui.platform.LocalContext.current
     var deleting by remember { mutableStateOf<WorkspaceRow?>(null) }
     DsDialog(title = stringResource(R.string.ink_chat_workspaces), onDismiss = onDismiss) {
         if (workspaces.isEmpty()) {
@@ -1945,6 +2073,15 @@ private fun WorkspacesDialog(
                         overflow = TextOverflow.Ellipsis,
                     )
                 }
+                val project = projects?.let { projectOfWorkspace(workspace.path) }
+                if (project != null) {
+                    ProjectShareMenu(
+                        project = project,
+                        onFiles = { com.labteto.dshmobile.ui.screens.runtime.openInFiles(context, com.labteto.dshmobile.runtime.workspace.WorkspaceTree.ROOT_ID + "/" + project) },
+                        onShare = { exporting = project to false },
+                        onSave = { exporting = project to true },
+                    )
+                }
                 DsIconButton(
                     icon = Icons.Outlined.Edit,
                     contentDescription = stringResource(R.string.chatlist_workspace_rename),
@@ -1960,6 +2097,16 @@ private fun WorkspacesDialog(
                     iconSize = 18.dp,
                 )
             }
+        }
+    }
+    val ops = projects
+    exporting?.let { (name, save) ->
+        if (ops != null) {
+            com.labteto.dshmobile.ui.screens.runtime.ExportDialog(ops, name, saveCopy = save, onDismiss = { exporting = null }, onStarted = {
+                exporting = null
+                onProjectJob()
+                onDismiss()
+            })
         }
     }
     renaming?.let { workspace ->
@@ -1985,6 +2132,31 @@ private fun WorkspacesDialog(
             },
         )
     }
+}
+
+/**
+ * The project a workspace on the built-in harness is in: the first folder under `/workspaces`, or
+ * null for any other path (a harness elsewhere, or the harness home).
+ */
+internal fun projectOfWorkspace(path: String): String? {
+    val clean = path.trim().replace('\\', '/')
+    if (!clean.startsWith(com.labteto.dshmobile.runtime.workspace.WorkspaceTree.GUEST_ROOT + "/")) return null
+    val first = clean.removePrefix(com.labteto.dshmobile.runtime.workspace.WorkspaceTree.GUEST_ROOT + "/").substringBefore('/')
+    return first.takeIf { com.labteto.dshmobile.runtime.workspace.WorkspaceTree.validSegment(it) && !it.startsWith(com.labteto.dshmobile.runtime.workspace.WorkspaceTree.RESERVED_PREFIX) }
+}
+
+/** Open in Files, Share as .zip and Save a copy, for a project row of the workspace list. */
+@Composable
+private fun ProjectShareMenu(project: String, onFiles: () -> Unit, onShare: () -> Unit, onSave: () -> Unit) {
+    DsIconMenu(
+        icon = Icons.Outlined.Share,
+        contentDescription = stringResource(R.string.projects_more_for, project),
+        items = listOf(
+            MenuItem(stringResource(R.string.projects_open_files), onClick = onFiles),
+            MenuItem(stringResource(R.string.projects_action_share_zip), onClick = onShare),
+            MenuItem(stringResource(R.string.projects_action_save_copy), onClick = onSave),
+        ),
+    )
 }
 
 // ---------------------------------------------------------------------------

@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">按最近更新排序</string>
     <string name="chatlist_sort_manual">手动排序</string>
     <string name="chat_composer_hint">给智能体发消息…</string>
+    <string name="chat_composer_expand">打开全屏编辑器</string>
+    <string name="chat_composer_fullscreen_title">消息</string>
     <string name="chat_composer_queue">队列</string>
     <string name="chat_composer_steer">引导</string>
     <string name="chat_composer_stop">停止</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">在对话中点选一个工具行，查看它的输入和输出。</string>
     <string name="chat_input_placeholder">输入</string>
     <string name="chat_output_placeholder">输出</string>
+    <string name="tool_output_show_raw">查看原始 JSON</string>
+    <string name="tool_output_hide_raw">收起原始 JSON</string>
+    <string name="tool_output_copy_raw">复制原始 JSON</string>
     <string name="goal_title">目标</string>
     <string name="goal_none">没有进行中的目标</string>
     <string name="goal_phase_active">进行中</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">回复生成时，始终显示最新的消息。向上滚动可以慢慢阅读，回到底部后会继续跟随。</string>
     <string name="settings_default_delivery_mode">默认发送方式</string>
     <string name="settings_default_delivery_mode_hint">回合进行中发送消息时使用。每条消息仍可单独选择其他方式。</string>
+    <string name="settings_work_steps">工作步骤展示</string>
+    <string name="settings_work_steps_hint">只影响聊天的显示方式，仅限这台设备。点按某一行可单独展开或收起。</string>
+    <string name="settings_auto_translate_reasoning">思考过程翻译</string>
+    <string name="settings_auto_translate_reasoning_hint">展开思考过程时自动翻译，使用和“翻译”按钮相同的服务和语言。每次翻译都会把文本发给该服务商。基于模型的服务商会消耗你的 token，Bing 和 Google 不会。</string>
+    <string name="settings_auto_translate_reasoning_unavailable">这个 harness 还没有设置翻译，所以这个开关在这里不起作用。请在 harness 上启用翻译插件并选择服务。</string>
+    <string name="settings_auto_translate_reasoning_no_host">连接 harness 后，才能看到它能不能翻译。</string>
+    <string name="reasoning_translation_failed">翻译失败，原文还在。</string>
+    <string name="work_steps_compact">简洁</string>
+    <string name="work_steps_compact_hint">完成的工作收成一行，工具调用保持在收起的分组里。</string>
+    <string name="work_steps_standard">标准</string>
+    <string name="work_steps_standard_hint">在简洁的基础上，运行中的分组会显示当前步骤，思考会显示第一行。</string>
+    <string name="work_steps_detailed">详细</string>
+    <string name="work_steps_detailed_hint">与标准相同，但正在运行的这一轮会逐条显示工具调用。</string>
+    <string name="work_steps_verbose">完全展开</string>
+    <string name="work_steps_verbose_hint">不折叠也不分组，工具调用自动展开，较长的输出只显示开头。</string>
+    <string name="work_steps_clipped">仅显示长内容的开头。</string>
+    <string name="work_steps_show_all">显示全部</string>
     <string name="settings_plugins">插件</string>
     <string name="settings_plugins_inventory">插件清单</string>
     <string name="settings_language">语言</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d 个月</string>
     <string name="time_years">%1$d 年</string>
     <string name="chatlist_open">打开会话列表</string>
+    <string name="chatlist_hide">隐藏会话列表</string>
+    <string name="chatlist_show">显示会话列表</string>
     <string name="hostswitcher_title">后端</string>
     <string name="hostswitcher_empty">暂无其他已记住的后端。在连接页连接一个即可添加到这里。</string>
     <string name="hostswitcher_current">当前</string>
@@ -310,7 +334,7 @@
     <string name="update_open">查看新版本</string>
     <string name="update_later">稍后</string>
     <string name="settings_update_check">检查更新</string>
-    <string name="settings_update_check_hint">应用启动时会向 GitHub 查询最新版本，隔几个小时再回到应用时也会查询一次。</string>
+    <string name="settings_update_check_hint">向 GitHub 查询应用有没有新版本；如果这台手机上设置了 harness，也会查询它。应用启动时查询一次，隔几个小时再回到应用时再查询一次。</string>
     <string name="connect_mode_lan">局域网</string>
     <string name="connect_mode_relay">中继</string>
     <string name="pair_title">配对中继</string>
@@ -369,9 +393,11 @@
     <string name="jobs_stopping">正在停止</string>
     <string name="jobs_output_empty">暂无输出</string>
     <string name="jobs_output_dropped">较早的输出已被清除</string>
-    <string name="archive_busy_title">仍在运行</string>
-    <string name="archive_busy_body">此会话还有任务在运行：%1$s。归档会先停止这些任务。</string>
+    <string name="archive_busy_title">停止并归档此会话？</string>
+    <string name="archive_busy_body">此会话还有任务在运行，归档会先停止它们。</string>
     <string name="archive_busy_confirm">停止并归档</string>
+    <string name="archive_busy_after">停止的任务不会自动继续。之后可以在“已归档会话”里找到这个会话，再接着用。</string>
+    <string name="archive_activity_more">还有 %1$d 项</string>
     <string name="archive_activity_turn">当前回合</string>
     <string name="archive_activity_subagent">子智能体</string>
     <string name="archive_activity_job">后台任务</string>
@@ -434,6 +460,15 @@
     <string name="harness_automation_history_not_found">此任务已不可用。</string>
     <string name="harness_automation_history_cursor_error">运行记录有变化，请重试。</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">你把权限改成了%1$s</string>
+    <string name="system_line_permission_changed_plain">你修改了权限</string>
+    <string name="system_line_permission_failed">权限没有修改成功</string>
+    <string name="system_line_compact">你压缩了对话</string>
+    <string name="system_line_plan_on">你开启了计划模式</string>
+    <string name="system_line_plan_off">你关闭了计划模式</string>
+    <string name="system_line_command">你运行了 %1$s</string>
+    <string name="system_line_command_failed">%1$s 没有执行成功</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">已回退到此处</string>
     <string name="rewind_no_text">（无文本）</string>
@@ -529,10 +564,9 @@
     <string name="hold_replace_draft_confirm">替换</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">限额与余额</string>
+    <string name="quota_title">用量</string>
     <string name="quota_short">5小时</string>
     <string name="quota_week">每周</string>
-    <string name="quota_unknown">暂无限额数据</string>
     <string name="quota_refresh">重新检查</string>
     <string name="quota_checked">已检查：%1$s</string>
     <string name="quota_all">所有提供商</string>
@@ -548,9 +582,41 @@
     <string name="quota_compact_minute">分</string>
     <string name="quota_other">其他限额</string>
     <string name="quota_remaining_percent">剩余：%1$s</string>
+    <string name="quota_session_title">本次会话</string>
+    <string name="quota_tokens_input">输入</string>
+    <string name="quota_tokens_output">输出</string>
+    <string name="quota_tokens_cache">缓存命中</string>
+    <string name="quota_tokens_total">合计</string>
+    <string name="quota_session_empty">还没有使用任何 token</string>
+    <string name="quota_balance_title">DeepSeek 余额</string>
+    <string name="quota_balance_bonus">赠金：%1$s</string>
+    <string name="quota_balance_failed">无法加载余额</string>
+    <string name="quota_limit_reached">已达到用量上限</string>
+    <string name="quota_rate_limited">请求太频繁，请稍后再试</string>
+    <string name="quota_limit_short">已达上限</string>
+    <string name="quota_rate_short">请求受限</string>
     <string name="permission_preset_read_only">仅可查看</string>
     <string name="permission_preset_workspace_write">工作区内修改</string>
     <string name="permission_preset_full_access">完全权限</string>
     <string name="permission_preset_auto">自动审查</string>
     <string name="permission_preset_auto_desc">无沙箱运行；每次原生工具调用和 PTC 内层调用前由同一模型进行实验性审查。</string>
+    <string name="shortcuts_group_message">消息框</string>
+    <string name="shortcuts_group_sessions">会话</string>
+    <string name="shortcuts_group_general">通用</string>
+    <string name="shortcuts_send">发送消息</string>
+    <string name="shortcuts_newline">换行</string>
+    <string name="shortcuts_focus_composer">跳到消息框</string>
+    <string name="shortcuts_new_session">新建会话</string>
+    <string name="shortcuts_search_sessions">搜索会话</string>
+    <string name="shortcuts_toggle_list">显示或隐藏会话</string>
+    <string name="shortcuts_settings">打开设置</string>
+    <string name="shortcuts_close">关闭面板或对话框</string>
+    <string name="chat_drop_hint">将文件拖到这里即可添加</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">正在本机上安装 harness</string>
+    <string name="runtime_notif_downloading">正在下载，已完成 %1$d%%</string>
+    <string name="runtime_notif_unpacking">正在解压文件</string>
+    <string name="runtime_notif_starting">正在本机上启动 harness</string>
+    <string name="runtime_notif_running">harness 正在本机上运行</string>
+    <string name="runtime_notif_running_text">正在监听端口 %1$d</string>
 </resources>

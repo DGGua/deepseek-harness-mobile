@@ -6,7 +6,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import com.labteto.dshmobile.ui.components.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,7 +26,6 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalUriHandler
@@ -333,13 +332,11 @@ private fun InlineMarkdown(text: String, style: TextStyle, modifier: Modifier = 
     if (!hasLinks) {
         // Nothing to tap, so the text is laid out inside a SelectionContainer instead: long-press
         // selects and the platform handles the copy affordance. A ClickableText swallows the
-        // long-press, which is why the two cannot share one branch. Re-keyed on the shared dismiss
-        // token so a tap elsewhere in the transcript clears the selection (see ChatTranscript).
-        val dismissToken = LocalSelectionDismiss.current.value
-        key(dismissToken) {
-            SelectionContainer(modifier = modifier) {
-                Text(result, style = style)
-            }
+        // long-press, which is why the two cannot share one branch. A tap elsewhere in the
+        // transcript clears the selection through the transcript's own observer (see
+        // clearSelectionOnTap), not through anything in here.
+        SelectionContainer(modifier = modifier) {
+            Text(result, style = style)
         }
         return
     }
@@ -382,9 +379,11 @@ private fun buildInlineContent(
             is InlineSegment.Plain -> builder.append(segment.text)
             is InlineSegment.Bold -> builder.withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(segment.text) }
             is InlineSegment.Italic -> builder.withStyle(SpanStyle(fontStyle = FontStyle.Italic)) { append(segment.text) }
+            // In right-to-left prose a path or a command is isolated, so it keeps its own order
+            // (and a `C:\...` path is not split into "C:" and the rest).
             is InlineSegment.Code -> builder.withStyle(
                 SpanStyle(fontFamily = codeStyle.fontFamily, color = codeStyle.color),
-            ) { append(segment.text) }
+            ) { append(inlineCodeDisplay(segment.text, paragraph = text)) }
             is InlineSegment.Link -> {
                 val path = if (safeHttpUrl(segment.url) == null) com.labteto.dshmobile.ui.screens.main.previewPath(segment.url) else null
                 builder.pushStringAnnotation("url", segment.url)
@@ -639,6 +638,11 @@ private fun MdBlockquote(block: MdBlock.Blockquote) {
 private fun CodeBlock(lang: String?, code: String, modifier: Modifier = Modifier) {
     val colors = DsTheme.colors
     val clipboard = LocalClipboardManager.current
+    // The same sideways-scrolling block the tool cards use, left to right whatever the message's
+    // language is. Its wrap switch sits in the banner, with the copy button.
+    val blockId = "message:" + code.hashCode()
+    val wrap = rememberCodeWrap(blockId)
+    val long = remember(code) { hasLongLine(code) }
     Column(
         modifier = modifier
             .fillMaxWidth()
@@ -661,6 +665,7 @@ private fun CodeBlock(lang: String?, code: String, modifier: Modifier = Modifier
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
+            if (long) WrapToggle(wrap)
             DsIconButton(
                 icon = Icons.Filled.ContentCopy,
                 contentDescription = stringResource(R.string.tool_copy_code),
@@ -674,11 +679,13 @@ private fun CodeBlock(lang: String?, code: String, modifier: Modifier = Modifier
         // and a theme change cannot break the lexer. The palette is scheme-aware now: the old fixed
         // light-theme tints were unreadable on the Ink canvas.
         val highlighted = remember(code, lang, colors) { codeAnnotated(code, lang, colors) }
-        Text(
+        CodeText(
             highlighted,
-            style = DsType.mdCode,
-            color = colors.labelPrimary,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 12.dp),
+            blockId = blockId,
+            fadeColor = colors.codeBlockBg,
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            wrap = wrap,
+            showToggle = false,
         )
     }
 }

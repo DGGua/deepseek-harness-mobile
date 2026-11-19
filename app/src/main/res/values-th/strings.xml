@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">เรียงตามการอัปเดตล่าสุด</string>
     <string name="chatlist_sort_manual">เรียงเอง</string>
     <string name="chat_composer_hint">ส่งข้อความถึงเอเจนต์…</string>
+    <string name="chat_composer_expand">เปิดตัวแก้ไขแบบเต็มหน้าจอ</string>
+    <string name="chat_composer_fullscreen_title">ข้อความ</string>
     <string name="chat_composer_queue">คิว</string>
     <string name="chat_composer_steer">แทรก</string>
     <string name="chat_composer_stop">หยุด</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">เลือกแถวเครื่องมือในแชทเพื่อดูอินพุตและเอาต์พุต</string>
     <string name="chat_input_placeholder">อินพุต</string>
     <string name="chat_output_placeholder">เอาต์พุต</string>
+    <string name="tool_output_show_raw">แสดง JSON ดิบ</string>
+    <string name="tool_output_hide_raw">ซ่อน JSON ดิบ</string>
+    <string name="tool_output_copy_raw">คัดลอก JSON ดิบ</string>
     <string name="goal_title">เป้าหมาย</string>
     <string name="goal_none">ไม่มีเป้าหมายที่ใช้งานอยู่</string>
     <string name="goal_phase_active">ใช้งานอยู่</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">เลื่อนตามข้อความล่าสุดขณะกำลังเขียนคำตอบ เลื่อนขึ้นเพื่ออ่านตามสบาย พอกลับลงมาล่างสุดก็จะเลื่อนตามอีกครั้ง</string>
     <string name="settings_default_delivery_mode">โหมดส่งเริ่มต้น</string>
     <string name="settings_default_delivery_mode_hint">ใช้เมื่อส่งข้อความขณะที่เทิร์นกำลังทำงาน คุณยังเลือกโหมดอื่นสำหรับแต่ละข้อความได้</string>
+    <string name="settings_work_steps">การแสดงขั้นตอนการทำงาน</string>
+    <string name="settings_work_steps_hint">เปลี่ยนแค่หน้าตาของแชท และเฉพาะบนอุปกรณ์เครื่องนี้ แตะแถวใดก็ได้เพื่อเปิดหรือปิดเฉพาะแถวนั้น</string>
+    <string name="settings_auto_translate_reasoning">แปลกระบวนการคิดอัตโนมัติ</string>
+    <string name="settings_auto_translate_reasoning_hint">แปลกระบวนการคิดให้เมื่อคุณเปิดดู โดยใช้ผู้ให้บริการและภาษาเดียวกับปุ่มแปล การแปลแต่ละครั้งจะส่งข้อความไปยังผู้ให้บริการนั้น ผู้ให้บริการที่ใช้โมเดลจะใช้โทเคนของคุณ ส่วน Bing และ Google ไม่ใช้</string>
+    <string name="settings_auto_translate_reasoning_unavailable">harness นี้ยังไม่ได้ตั้งค่าการแปล สวิตช์นี้จึงไม่มีผลที่นี่ เปิดปลั๊กอินแปลและเลือกผู้ให้บริการบน harness</string>
+    <string name="settings_auto_translate_reasoning_no_host">เชื่อมต่อ harness เพื่อดูว่าแปลได้หรือไม่</string>
+    <string name="reasoning_translation_failed">แปลไม่สำเร็จ ข้อความต้นฉบับยังอยู่</string>
+    <string name="work_steps_compact">กะทัดรัด</string>
+    <string name="work_steps_compact_hint">งานที่เสร็จแล้วจะพับเหลือแถวเดียว การเรียกเครื่องมืออยู่ในกลุ่มที่ปิดไว้</string>
+    <string name="work_steps_standard">มาตรฐาน</string>
+    <string name="work_steps_standard_hint">เหมือนแบบกะทัดรัด และกลุ่มที่กำลังทำงานจะบอกขั้นตอนปัจจุบัน ส่วนการคิดจะแสดงบรรทัดแรก</string>
+    <string name="work_steps_detailed">ละเอียด</string>
+    <string name="work_steps_detailed_hint">เหมือนแบบมาตรฐาน แต่การเรียกเครื่องมือในเทิร์นที่กำลังทำงานจะแสดงทีละรายการ</string>
+    <string name="work_steps_verbose">ขยายทั้งหมด</string>
+    <string name="work_steps_verbose_hint">ไม่พับและไม่จัดกลุ่มอะไรเลย การเรียกเครื่องมือจะเปิดเอง และแสดงส่วนต้นของผลลัพธ์ที่ยาว</string>
+    <string name="work_steps_clipped">แสดงส่วนต้นของผลลัพธ์ที่ยาว</string>
+    <string name="work_steps_show_all">แสดงทั้งหมด</string>
     <string name="settings_plugins">ปลั๊กอิน</string>
     <string name="settings_plugins_inventory">รายการปลั๊กอิน</string>
     <string name="settings_language">ภาษา</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d เดือน</string>
     <string name="time_years">%1$d ปี</string>
     <string name="chatlist_open">เปิดรายการแชท</string>
+    <string name="chatlist_hide">ซ่อนรายการแชท</string>
+    <string name="chatlist_show">แสดงรายการแชท</string>
     <string name="chatlist_workspace_rename">เปลี่ยนชื่อโปรเจกต์</string>
     <string name="chatlist_workspace_delete">นำโปรเจกต์ออก</string>
     <string name="chatlist_workspace_delete_confirm">นำโปรเจกต์นี้ออกจาก harness หรือไม่ โฟลเดอร์และบันทึกเซสชันของโปรเจกต์ยังอยู่เหมือนเดิม</string>
@@ -297,7 +321,7 @@
     <string name="update_open">ดูรุ่นใหม่</string>
     <string name="update_later">ไว้ทีหลัง</string>
     <string name="settings_update_check">ตรวจหาอัปเดต</string>
-    <string name="settings_update_check_hint">เช็กกับ GitHub หาเวอร์ชันล่าสุดตอนเปิดแอป และเช็กอีกครั้งเมื่อกลับมาใช้แอปหลังผ่านไปหลายชั่วโมง</string>
+    <string name="settings_update_check_hint">เช็กกับ GitHub ว่ามีแอปเวอร์ชันใหม่ไหม และ harness เวอร์ชันใหม่ถ้าตั้งค่าไว้บนโทรศัพท์นี้ ตอนเปิดแอป และอีกครั้งเมื่อกลับมาใช้แอปหลังผ่านไปหลายชั่วโมง</string>
     <string name="connect_mode_lan">เครือข่ายภายใน</string>
     <string name="connect_mode_relay">รีเลย์</string>
     <string name="pair_title">จับคู่รีเลย์</string>
@@ -356,9 +380,11 @@
     <string name="jobs_stopping">กำลังหยุด</string>
     <string name="jobs_output_empty">ยังไม่มีเอาต์พุต</string>
     <string name="jobs_output_dropped">ตัดเอาต์พุตก่อนหน้านี้ออกแล้ว</string>
-    <string name="archive_busy_title">ยังทำงานอยู่</string>
-    <string name="archive_busy_body">เซสชันนี้ยังมีงานค้างอยู่: %1$s ถ้าเก็บถาวร ระบบจะหยุดงานเหล่านั้นก่อน</string>
+    <string name="archive_busy_title">หยุดและเก็บถาวรเซสชันนี้ไหม</string>
+    <string name="archive_busy_body">เซสชันนี้ยังมีงานทำงานอยู่ การเก็บถาวรจะหยุดงานเหล่านั้นก่อน</string>
     <string name="archive_busy_confirm">หยุดและเก็บถาวร</string>
+    <string name="archive_busy_after">งานที่หยุดจะไม่ทำต่อเอง คุณหาเซสชันนี้ได้ใน “เซสชันที่เก็บถาวร” แล้วเปิดกลับมาทำต่อได้</string>
+    <string name="archive_activity_more">และอีก %1$d</string>
     <string name="archive_activity_turn">เทิร์นปัจจุบัน</string>
     <string name="archive_activity_subagent">ซับเอเจนต์</string>
     <string name="archive_activity_job">งานเบื้องหลัง</string>
@@ -421,6 +447,15 @@
     <string name="harness_automation_history_not_found">งานนี้ไม่พร้อมใช้งานแล้ว</string>
     <string name="harness_automation_history_cursor_error">ประวัติมีการเปลี่ยนแปลง ลองอีกครั้ง</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">คุณเปลี่ยนสิทธิ์เป็น %1$s</string>
+    <string name="system_line_permission_changed_plain">คุณเปลี่ยนสิทธิ์</string>
+    <string name="system_line_permission_failed">เปลี่ยนสิทธิ์ไม่สำเร็จ</string>
+    <string name="system_line_compact">คุณบีบอัดการสนทนา</string>
+    <string name="system_line_plan_on">คุณเปิดโหมดวางแผน</string>
+    <string name="system_line_plan_off">คุณปิดโหมดวางแผน</string>
+    <string name="system_line_command">คุณรัน %1$s</string>
+    <string name="system_line_command_failed">รัน %1$s ไม่สำเร็จ</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">ย้อนกลับมาถึงตรงนี้</string>
     <string name="rewind_no_text">(ไม่มีข้อความ)</string>
@@ -516,10 +551,9 @@
     <string name="hold_replace_draft_confirm">แทนที่</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">ขีดจำกัดและยอดคงเหลือ</string>
+    <string name="quota_title">การใช้งาน</string>
     <string name="quota_short">5 ชม.</string>
     <string name="quota_week">สัปดาห์</string>
-    <string name="quota_unknown">ไม่มีข้อมูลขีดจำกัด</string>
     <string name="quota_refresh">ตรวจสอบอีกครั้ง</string>
     <string name="quota_checked">ตรวจสอบแล้ว: %1$s</string>
     <string name="quota_all">ผู้ให้บริการทั้งหมด</string>
@@ -535,11 +569,43 @@
     <string name="quota_compact_minute">นาที</string>
     <string name="quota_other">ขีดจำกัดอื่น</string>
     <string name="quota_remaining_percent">คงเหลือ: %1$s</string>
+    <string name="quota_session_title">เซสชันนี้</string>
+    <string name="quota_tokens_input">อินพุต</string>
+    <string name="quota_tokens_output">เอาต์พุต</string>
+    <string name="quota_tokens_cache">แคชฮิต</string>
+    <string name="quota_tokens_total">รวม</string>
+    <string name="quota_session_empty">ยังไม่มีการใช้โทเคน</string>
+    <string name="quota_balance_title">ยอดเงิน DeepSeek</string>
+    <string name="quota_balance_bonus">โบนัส: %1$s</string>
+    <string name="quota_balance_failed">โหลดยอดเงินไม่สำเร็จ</string>
+    <string name="quota_limit_reached">ถึงขีดจำกัดการใช้งานแล้ว</string>
+    <string name="quota_rate_limited">ส่งคำขอถี่เกินไป ลองใหม่อีกครั้งในอีกสักครู่</string>
+    <string name="quota_limit_short">ถึงขีดจำกัดแล้ว</string>
+    <string name="quota_rate_short">ถูกจำกัดคำขอ</string>
     <string name="permission_preset_read_only">อ่านอย่างเดียว</string>
     <string name="permission_preset_workspace_write">เขียนในเวิร์กสเปซ</string>
     <string name="permission_preset_full_access">เข้าถึงทั้งหมด</string>
     <string name="permission_preset_auto">ตรวจสอบอัตโนมัติ</string>
     <string name="permission_preset_auto_desc">รันโดยไม่มีแซนด์บ็อกซ์ หลังจากการตรวจสอบเชิงทดลองโดยโมเดลเดียวกันสำหรับการเรียกใช้เครื่องมือเนทีฟและการเรียก PTC ภายในทุกครั้ง</string>
+    <string name="shortcuts_group_message">ช่องข้อความ</string>
+    <string name="shortcuts_group_sessions">เซสชัน</string>
+    <string name="shortcuts_group_general">ทั่วไป</string>
+    <string name="shortcuts_send">ส่งข้อความ</string>
+    <string name="shortcuts_newline">ขึ้นบรรทัดใหม่</string>
+    <string name="shortcuts_focus_composer">ไปที่ช่องข้อความ</string>
+    <string name="shortcuts_new_session">เซสชันใหม่</string>
+    <string name="shortcuts_search_sessions">ค้นหาเซสชัน</string>
+    <string name="shortcuts_toggle_list">แสดงหรือซ่อนเซสชัน</string>
+    <string name="shortcuts_settings">เปิดการตั้งค่า</string>
+    <string name="shortcuts_close">ปิดแผ่นหรือกล่องโต้ตอบ</string>
+    <string name="chat_drop_hint">วางไฟล์ที่นี่เพื่อแนบ</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">กำลังติดตั้ง harness บนเครื่องนี้</string>
+    <string name="runtime_notif_downloading">กำลังดาวน์โหลด เสร็จแล้ว %1$d%%</string>
+    <string name="runtime_notif_unpacking">กำลังแตกไฟล์</string>
+    <string name="runtime_notif_starting">กำลังเริ่ม harness บนเครื่องนี้</string>
+    <string name="runtime_notif_running">harness ทำงานอยู่บนเครื่องนี้</string>
+    <string name="runtime_notif_running_text">รอการเชื่อมต่อที่พอร์ต %1$d</string>
     <string name="hostswitcher_title">แบ็กเอนด์</string>
     <string name="hostswitcher_empty">ยังไม่มีแบ็กเอนด์อื่นที่จดจำไว้ เชื่อมต่อจากหน้าเชื่อมต่อเพื่อเพิ่มที่นี่</string>
     <string name="hostswitcher_current">ปัจจุบัน</string>

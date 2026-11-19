@@ -23,7 +23,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
@@ -158,29 +157,22 @@ internal fun JobOutputSheet(job: JobView, store: SessionStore, canStop: Boolean,
 
     DsBottomSheet(
         title = current.label,
-        subtitle = listOfNotNull(current.kind, jobStatusLabel(current.status), current.progress ?: current.detail)
+        subtitle = listOfNotNull(jobKindLabel(current.kind), jobStatusLabel(current.status), current.progress ?: current.detail)
             .joinToString(" · "),
         onDismiss = onDismiss,
         trailing = {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                if (canStop && current.status == JobStatus.RUNNING) {
-                    DsIconButton(
-                        icon = Icons.Filled.Stop,
-                        contentDescription = stringResource(R.string.jobs_stop),
-                        onClick = {
-                            scope.launch {
-                                // The sheet sits over the chat's banner, so a refusal is said here.
-                                val outcome = store.killJob(current.id, report = false)
-                                stopProblem = (outcome as? ActionOutcome.Failed)?.let { failureNotice(stopFailedLabel, it.message) }
-                            }
-                        },
-                        tint = colors.error,
-                    )
-                }
+            if (canStop && current.status == JobStatus.RUNNING) {
                 DsIconButton(
-                    icon = Icons.Filled.Close,
-                    contentDescription = stringResource(R.string.common_close),
-                    onClick = onDismiss,
+                    icon = Icons.Filled.Stop,
+                    contentDescription = stringResource(R.string.jobs_stop),
+                    onClick = {
+                        scope.launch {
+                            // The sheet sits over the chat's banner, so a refusal is said here.
+                            val outcome = store.killJob(current.id, report = false)
+                            stopProblem = (outcome as? ActionOutcome.Failed)?.let { failureNotice(stopFailedLabel, it.message) }
+                        }
+                    },
+                    tint = colors.error,
                 )
             }
         },

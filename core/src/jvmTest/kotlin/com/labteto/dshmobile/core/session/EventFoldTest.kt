@@ -21,6 +21,33 @@ class EventFoldTest {
     private fun event(type: String, seq: Long, data: kotlinx.serialization.json.JsonObject): SessionEventEnvelope =
         SessionEventEnvelope(type, seq, seq, data)
 
+    /**
+     * A failed turn's end as the harness records it: `reason = { kind: 'error', error: LlmFailure }`,
+     * where the failure is `{ message, code, status? }` (`core/session/src/types.ts`,
+     * `TurnEndReasonMap.error`; `llm/llm/src/types.ts`, `LlmFailure`).
+     */
+    @Test
+    fun aFailedTurnKeepsItsCodeAndTheProvidersMessage() {
+        val events = listOf(
+            event("turn/start", 0, buildJsonObject { put("turn", 1) }),
+            event("turn/end", 1, buildJsonObject {
+                put("turn", 1)
+                putJsonObject("reason") {
+                    put("kind", "error")
+                    putJsonObject("error") {
+                        put("message", "429 Too Many Requests: rate limit reached for requests")
+                        put("code", "RATE_LIMIT")
+                        put("status", 429)
+                    }
+                }
+            }),
+        )
+        val end = EventFold("s1").fold(events).nodes.filterIsInstance<TurnEndNode>().single()
+        assertEquals("error", end.reasonKind)
+        assertEquals("RATE_LIMIT", end.failureCode)
+        assertEquals("429 Too Many Requests: rate limit reached for requests", end.failureMessage)
+    }
+
     @Test
     fun foldsBasicTurn() {
         val events = listOf(
@@ -149,6 +176,82 @@ class EventFoldTest {
         )
         val snapshot = EventFold("s1").fold(events)
         assertTrue(snapshot.nodes.single() is OtherNode)
+    }
+
+    // Issue #98: one compaction writes start, summary and end, and a prune writes its own event.
+    // The fold keeps one node per event (the transcript decides which one is drawn), and a
+    // replayed event is dropped by its seq rather than folded in again.
+    @Test
+    fun compactionEventsFoldToOneNodeEachAndReplaysAreDropped() {
+        val events = listOf(
+            event("compaction/start", 1, buildJsonObject { put("compactionId", "c1") }),
+            event("compaction/summary", 2, buildJsonObject { put("compactionId", "c1") }),
+            event("compaction/end", 3, buildJsonObject { put("compactionId", "c1") }),
+            event("compaction/prune", 4, buildJsonObject { put("shadowedTokenCount", 10) }),
+        )
+        val snapshot = EventFold("s1").fold(events)
+        assertEquals(
+            listOf("compaction/start", "compaction/summary", "compaction/end", "compaction/prune"),
+            snapshot.nodes.filterIsInstance<CompactionNode>().map { it.kind },
+        )
+
+        val incremental = EventFold.Incremental(snapshot, "s1")
+        events.forEach { assertEquals(null, incremental.apply(it)) }
+        val next = incremental.apply(event("compaction/summary", 5, buildJsonObject { put("compactionId", "c2") }))!!
+        assertEquals(5, next.nodes.count { it is CompactionNode })
+    }
+
+    private fun pluginRecord(seq: Long, type: String, ignorable: Boolean? = true) =
+        SessionEventEnvelope(type, seq, seq, buildJsonObject { put("provider", "deepseek-account") }, ignorable = ignorable)
+
+    // Issue #96: the harness writes the translator's request and result with `ignorable: true`
+    // (every `plugin:` record is), and they printed as raw JSON rows in the middle of the chat.
+    @Test
+    fun ignorablePluginRecordsFoldToSkippableNodesAndStayInTheJournal() {
+        val events = listOf(
+            event("turn/start", 0, buildJsonObject { put("turn", 1) }),
+            pluginRecord(1, "plugin:translator/request"),
+            pluginRecord(2, "plugin:translator/result"),
+        )
+        val snapshot = EventFold("s1").fold(events)
+
+        val records = snapshot.nodes.filterIsInstance<OtherNode>()
+        assertEquals(listOf("plugin:translator/request", "plugin:translator/result"), records.map { it.type })
+        assertTrue(records.all { it.ignorable && it.isSkippableUnknown })
+        // Trajectory re-folds this journal and also lists it raw, so the record must survive both.
+        assertEquals(listOf(0L, 1L, 2L), snapshot.journal.map { it.seq })
+        assertEquals(true, snapshot.journal[1].ignorable)
+    }
+
+    @Test
+    fun ignorableMarkerSurvivesIncrementalFolding() {
+        val fold = EventFold.Incremental(ConversationSnapshot("s1", lastSeq = 0), "s1")
+        val snapshot = fold.apply(pluginRecord(1, "plugin:translator/request"))!!
+        val record = snapshot.nodes.single() as OtherNode
+        assertTrue(record.isSkippableUnknown)
+    }
+
+    @Test
+    fun unknownEventWithoutTheMarkerStaysVisible() {
+        // An unrecognised type the harness did not mark skippable is a required event: the
+        // compatibility contract keeps it on screen rather than guessing it away.
+        for (marker in listOf(null, false)) {
+            val node = EventFold("s1").fold(listOf(pluginRecord(0, "mystery/event", marker))).nodes.single() as OtherNode
+            assertFalse("marker=$marker", node.isSkippableUnknown)
+        }
+        // The plugin namespace alone proves nothing; only the harness's marker does.
+        val unmarked = EventFold("s1").fold(listOf(pluginRecord(0, "plugin:translator/request", null))).nodes.single() as OtherNode
+        assertFalse(unmarked.isSkippableUnknown)
+    }
+
+    @Test
+    fun aClassifiedTypeIsNeverSkippableWhateverTheMarkerSays() {
+        // A type this build draws keeps its own treatment; a stray marker cannot make it vanish.
+        for (type in listOf("workspace/changes", "system/message", "deliverables/presented", "step/start")) {
+            val node = EventFold("s1").fold(listOf(pluginRecord(0, type))).nodes.single() as OtherNode
+            assertTrue(type, node.ignorable)
+            assertFalse(type, node.isSkippableUnknown)
+        }
     }
 
     @Test

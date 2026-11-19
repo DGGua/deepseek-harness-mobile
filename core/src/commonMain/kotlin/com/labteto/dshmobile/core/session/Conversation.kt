@@ -35,7 +35,17 @@ sealed interface ChatNode {
 }
 
 data class TurnStartNode(override val seq: Long, val turn: Int) : ChatNode
-data class TurnEndNode(override val seq: Long, val turn: Int, val reasonKind: String, val reasonDetail: JsonElement? = null) : ChatNode
+/** [failureCode] is the `error.code` of a turn that ended in an `error`, such as `QUOTA` or `RATE_LIMIT`. */
+data class TurnEndNode(
+    override val seq: Long,
+    val turn: Int,
+    val reasonKind: String,
+    val reasonDetail: JsonElement? = null,
+    /** `reason.error.code` of a failed turn (`RATE_LIMIT`, `QUOTA`, ...); null otherwise. */
+    val failureCode: String? = null,
+    /** `reason.error.message` of a failed turn: the provider's own words, kept for diagnostics. */
+    val failureMessage: String? = null,
+) : ChatNode
 
 data class UserMessageNode(
     override val seq: Long,
@@ -115,6 +125,21 @@ data class ToolResultNode(
     val turn: Int,
     val step: Int,
     val meta: JsonElement? = null,
+    /**
+     * The structured failure code of a tool that threw (`tool/result`'s `error.code`, such as
+     * `SANDBOX_UNAVAILABLE`); null when the call succeeded or the harness gave no code.
+     */
+    val errorCode: String? = null,
+    /**
+     * The `name` beside [errorCode] (`tool/result`'s `error.name`), such as `SandboxUnavailableError`
+     * or the built-in runtime's `DshMobilePermissionDenied`; null when the harness gave none.
+     */
+    val errorName: String? = null,
+    /**
+     * The free-text `reason` beside [errorCode] (`tool/result`'s `error.reason`), which Auto review
+     * records when it refuses a call (`AUTO_REVIEW_DENIED`); null when the harness gave none.
+     */
+    val errorReason: String? = null,
 ) : ChatNode
 
 /**
@@ -139,7 +164,34 @@ data class CommandNode(override val seq: Long, val kind: String, val data: JsonE
 data class TitleNode(override val seq: Long, val title: String) : ChatNode
 data class WorkflowNode(override val seq: Long, val kind: String, val data: JsonElement) : ChatNode
 data class SubagentNode(override val seq: Long, val data: JsonElement) : ChatNode
-data class OtherNode(override val seq: Long, val type: String, val data: JsonElement) : ChatNode
+/**
+ * An event this build draws no typed node for: a [EventClassification.PASSTHROUGH] type the
+ * presentation layer labels or hides, or a type this build has never heard of.
+ *
+ * [ignorable] is the harness's own envelope marker, carried verbatim. It means "a reader that does
+ * not recognise this type may skip it", which is exactly how the harness writes plugin records
+ * (`plugin:<owner>/<record>`, such as the translator's request and result): retained in the log,
+ * never part of the conversation.
+ */
+data class OtherNode(
+    override val seq: Long,
+    val type: String,
+    val data: JsonElement,
+    val ignorable: Boolean = false,
+) : ChatNode {
+    /**
+     * True when the harness marked this record skippable *and* this build has no opinion about its
+     * type, so the conversation has nothing to say for it.
+     *
+     * Both halves matter. An unknown type without the marker is a required event the harness would
+     * refuse to read past, so it stays visible: that is the compatibility contract. A type this
+     * build classifies keeps whatever treatment [EventClassification] gives it whatever the marker
+     * says. Trajectory ignores this on purpose: the ledger is where such a record is meant to be
+     * found.
+     */
+    val isSkippableUnknown: Boolean
+        get() = ignorable && type !in EventClassification.CLASSIFIED
+}
 
 /** One pending queue item (from the session/queue frame snapshot). */
 data class QueueItem(

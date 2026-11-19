@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">Ordenar por última atualização</string>
     <string name="chatlist_sort_manual">Ordem manual</string>
     <string name="chat_composer_hint">Envie uma mensagem ao agente…</string>
+    <string name="chat_composer_expand">Abrir o editor em tela cheia</string>
+    <string name="chat_composer_fullscreen_title">Mensagem</string>
     <string name="chat_composer_queue">Fila</string>
     <string name="chat_composer_steer">Direcionar</string>
     <string name="chat_composer_stop">Parar</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">Selecione uma linha de ferramenta no chat para inspecionar sua entrada e saída.</string>
     <string name="chat_input_placeholder">Entrada</string>
     <string name="chat_output_placeholder">Saída</string>
+    <string name="tool_output_show_raw">Mostrar JSON sem formatação</string>
+    <string name="tool_output_hide_raw">Ocultar JSON sem formatação</string>
+    <string name="tool_output_copy_raw">Copiar JSON sem formatação</string>
     <string name="goal_title">Objetivo</string>
     <string name="goal_none">Nenhum objetivo ativo</string>
     <string name="goal_phase_active">Ativo</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">Mantém a mensagem mais recente visível enquanto a resposta chega. Role para cima para ler no seu ritmo. O acompanhamento volta quando você chega ao fim.</string>
     <string name="settings_default_delivery_mode">Modo de envio padrão</string>
     <string name="settings_default_delivery_mode_hint">Usado ao enviar enquanto um turno está em andamento. Ainda é possível escolher outro modo para cada mensagem.</string>
+    <string name="settings_work_steps">Etapas de trabalho</string>
+    <string name="settings_work_steps_hint">Só muda a aparência do chat, e só neste dispositivo. Toque em uma linha para abrir ou fechar apenas ela.</string>
+    <string name="settings_auto_translate_reasoning">Traduzir o raciocínio automaticamente</string>
+    <string name="settings_auto_translate_reasoning_hint">Traduz o raciocínio quando você o abre, com o mesmo provedor e idioma do botão Traduzir. Cada tradução envia o texto a esse provedor. Um provedor de modelo usa seus tokens; Bing e Google não.</string>
+    <string name="settings_auto_translate_reasoning_unavailable">Este harness não tem tradução configurada, então a opção não faz nada aqui. Ative o plugin de tradução e escolha um provedor no harness.</string>
+    <string name="settings_auto_translate_reasoning_no_host">Conecte-se a um harness para ver se ele consegue traduzir.</string>
+    <string name="reasoning_translation_failed">Não foi possível traduzir. O original continua aqui.</string>
+    <string name="work_steps_compact">Compacto</string>
+    <string name="work_steps_compact_hint">O trabalho concluído se recolhe em uma linha. As chamadas de ferramentas ficam em um grupo fechado.</string>
+    <string name="work_steps_standard">Padrão</string>
+    <string name="work_steps_standard_hint">Como o Compacto, e um grupo em andamento mostra a etapa atual. O raciocínio mostra a primeira linha.</string>
+    <string name="work_steps_detailed">Detalhado</string>
+    <string name="work_steps_detailed_hint">Como o Padrão, mas as chamadas de ferramentas do turno em andamento aparecem uma a uma.</string>
+    <string name="work_steps_verbose">Tudo aberto</string>
+    <string name="work_steps_verbose_hint">Nada é recolhido nem agrupado. As chamadas de ferramentas abrem sozinhas e mostram o início de saídas longas.</string>
+    <string name="work_steps_clipped">Mostrando o início de um resultado longo.</string>
+    <string name="work_steps_show_all">Mostrar tudo</string>
     <string name="settings_plugins">Plugins</string>
     <string name="settings_plugins_inventory">Inventário de plugins</string>
     <string name="settings_language">Idioma</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d m</string>
     <string name="time_years">%1$d a</string>
     <string name="chatlist_open">Abrir conversas</string>
+    <string name="chatlist_hide">Ocultar conversas</string>
+    <string name="chatlist_show">Mostrar conversas</string>
     <string name="chatlist_workspace_rename">Renomear projeto</string>
     <string name="chatlist_workspace_delete">Remover projeto</string>
     <string name="chatlist_workspace_delete_confirm">Remover este projeto do harness? A pasta e os registros de sessão dele continuam como estão.</string>
@@ -297,7 +321,7 @@
     <string name="update_open">Ver versão</string>
     <string name="update_later">Depois</string>
     <string name="settings_update_check">Procurar atualizações</string>
-    <string name="settings_update_check_hint">Consulta no GitHub a versão mais recente ao iniciar o app e de novo quando você volta a ele depois de algumas horas.</string>
+    <string name="settings_update_check_hint">Consulta no GitHub se há um app mais novo, e um harness mais novo se houver um configurado neste telefone. Ao iniciar o app e de novo quando você volta a ele depois de algumas horas.</string>
     <string name="connect_mode_lan">Rede local</string>
     <string name="connect_mode_relay">Relay</string>
     <string name="pair_title">Parear um relay</string>
@@ -356,13 +380,15 @@
     <string name="jobs_stopping">Parando</string>
     <string name="jobs_output_empty">Ainda sem saída</string>
     <string name="jobs_output_dropped">A saída anterior foi descartada</string>
-    <string name="archive_busy_title">Ainda em execução</string>
-    <string name="archive_busy_body">Esta sessão ainda tem trabalho em execução: %1$s. Se você arquivar, esse trabalho será parado antes.</string>
+    <string name="archive_busy_title">Parar e arquivar esta sessão?</string>
+    <string name="archive_busy_body">Esta sessão ainda tem trabalho em execução. Arquivá-la interrompe esse trabalho primeiro.</string>
     <string name="archive_busy_confirm">Parar e arquivar</string>
-    <string name="archive_activity_turn">o turno atual</string>
-    <string name="archive_activity_subagent">subagentes</string>
-    <string name="archive_activity_job">trabalhos em segundo plano</string>
-    <string name="archive_activity_schedule">agendamentos</string>
+    <string name="archive_busy_after">O trabalho parado não continua sozinho. Você encontra a sessão em Sessões arquivadas e pode retomá-la por lá.</string>
+    <string name="archive_activity_more">e mais %1$d</string>
+    <string name="archive_activity_turn">Turno atual</string>
+    <string name="archive_activity_subagent">Subagentes</string>
+    <string name="archive_activity_job">Trabalhos em segundo plano</string>
+    <string name="archive_activity_schedule">Agendamentos</string>
     <string name="chatlist_pinned">Fixadas</string>
     <string name="chatlist_session_pin">Fixar sessão</string>
     <string name="chatlist_session_unpin">Desafixar sessão</string>
@@ -421,6 +447,15 @@
     <string name="harness_automation_history_not_found">Esta tarefa não está mais disponível.</string>
     <string name="harness_automation_history_cursor_error">Os registros mudaram. Tente de novo.</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">Você alterou a permissão para %1$s</string>
+    <string name="system_line_permission_changed_plain">Você alterou a permissão</string>
+    <string name="system_line_permission_failed">A alteração de permissão não foi concluída</string>
+    <string name="system_line_compact">Você compactou a conversa</string>
+    <string name="system_line_plan_on">Você ativou o modo de plano</string>
+    <string name="system_line_plan_off">Você desativou o modo de plano</string>
+    <string name="system_line_command">Você executou %1$s</string>
+    <string name="system_line_command_failed">%1$s não foi concluído</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">Retrocedido até aqui</string>
     <string name="rewind_no_text">(sem texto)</string>
@@ -516,10 +551,9 @@
     <string name="hold_replace_draft_confirm">Substituir</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">Limites e saldo</string>
+    <string name="quota_title">Uso</string>
     <string name="quota_short">5 h</string>
     <string name="quota_week">Semana</string>
-    <string name="quota_unknown">Sem dados de limites</string>
     <string name="quota_refresh">Verificar novamente</string>
     <string name="quota_checked">Verificado: %1$s</string>
     <string name="quota_all">Todos os provedores</string>
@@ -535,11 +569,43 @@
     <string name="quota_compact_minute">min</string>
     <string name="quota_other">Outro limite</string>
     <string name="quota_remaining_percent">Restante: %1$s</string>
+    <string name="quota_session_title">Esta sessão</string>
+    <string name="quota_tokens_input">Entrada</string>
+    <string name="quota_tokens_output">Saída</string>
+    <string name="quota_tokens_cache">Acertos no cache</string>
+    <string name="quota_tokens_total">Total</string>
+    <string name="quota_session_empty">Nenhum token usado ainda</string>
+    <string name="quota_balance_title">Saldo da DeepSeek</string>
+    <string name="quota_balance_bonus">Bônus: %1$s</string>
+    <string name="quota_balance_failed">Não foi possível carregar o saldo</string>
+    <string name="quota_limit_reached">Limite de uso atingido</string>
+    <string name="quota_rate_limited">Muitas solicitações, tente de novo em instantes</string>
+    <string name="quota_limit_short">Limite atingido</string>
+    <string name="quota_rate_short">Limite de requisições</string>
     <string name="permission_preset_read_only">Somente leitura</string>
     <string name="permission_preset_workspace_write">Gravação no espaço de trabalho</string>
     <string name="permission_preset_full_access">Acesso total</string>
     <string name="permission_preset_auto">Revisão automática</string>
     <string name="permission_preset_auto_desc">Executa sem um sandbox após uma revisão experimental do mesmo modelo de cada chamada de ferramenta nativa e chamada interna PTC.</string>
+    <string name="shortcuts_group_message">Caixa de mensagem</string>
+    <string name="shortcuts_group_sessions">Sessões</string>
+    <string name="shortcuts_group_general">Geral</string>
+    <string name="shortcuts_send">Enviar mensagem</string>
+    <string name="shortcuts_newline">Nova linha</string>
+    <string name="shortcuts_focus_composer">Ir para a caixa de mensagem</string>
+    <string name="shortcuts_new_session">Nova sessão</string>
+    <string name="shortcuts_search_sessions">Pesquisar sessões</string>
+    <string name="shortcuts_toggle_list">Mostrar ou ocultar sessões</string>
+    <string name="shortcuts_settings">Abrir configurações</string>
+    <string name="shortcuts_close">Fechar painel ou caixa de diálogo</string>
+    <string name="chat_drop_hint">Solte os arquivos aqui para anexá-los</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">Preparando o harness neste telefone</string>
+    <string name="runtime_notif_downloading">Baixando, %1$d%% concluído</string>
+    <string name="runtime_notif_unpacking">Descompactando arquivos</string>
+    <string name="runtime_notif_starting">Iniciando o harness neste telefone</string>
+    <string name="runtime_notif_running">Harness rodando neste telefone</string>
+    <string name="runtime_notif_running_text">Escutando na porta %1$d</string>
     <string name="hostswitcher_title">Backends</string>
     <string name="hostswitcher_empty">Nenhum outro backend lembrado. Conecte-se a um pela tela de conexão para adicioná-lo aqui.</string>
     <string name="hostswitcher_current">Atual</string>

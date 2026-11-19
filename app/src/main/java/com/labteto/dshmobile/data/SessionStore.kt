@@ -1,6 +1,7 @@
 package com.labteto.dshmobile.data
 
 import com.labteto.dshmobile.core.wire.automationCatalog
+import com.labteto.dshmobile.core.wire.marketIndexes
 import com.labteto.dshmobile.core.wire.pluginBundles
 
 import android.util.Base64
@@ -14,6 +15,7 @@ import com.labteto.dshmobile.core.session.ConversationSnapshot
 import com.labteto.dshmobile.core.session.EventFold
 import com.labteto.dshmobile.core.session.QueueItem
 import com.labteto.dshmobile.core.session.SessionEventEnvelope
+import com.labteto.dshmobile.core.account.withAccountCapability
 import com.labteto.dshmobile.core.wire.DshApiClient
 import com.labteto.dshmobile.core.wire.RpcResult
 import com.labteto.dshmobile.core.wire.decodeFromJsonElement
@@ -45,6 +47,8 @@ import com.labteto.dshmobile.core.wire.dto.PluginInventorySnapshot
 import com.labteto.dshmobile.core.wire.dto.PromptContentPart
 import com.labteto.dshmobile.core.wire.dto.QUESTION_CANCELLED
 import com.labteto.dshmobile.core.wire.dto.QueueAction
+import com.labteto.dshmobile.core.usage.toUsageFetch
+import com.labteto.dshmobile.core.wire.dto.ModelSelection
 import com.labteto.dshmobile.core.wire.dto.ModelSelectionProjection
 import kotlinx.coroutines.flow.combine
 import com.labteto.dshmobile.core.wire.dto.ModelCatalog
@@ -84,7 +88,6 @@ import com.labteto.dshmobile.core.wire.dto.JobFollowFrameSerializer
 import com.labteto.dshmobile.core.wire.dto.JobFollowRequest
 import com.labteto.dshmobile.core.wire.dto.JobListRequest
 import com.labteto.dshmobile.core.wire.dto.SessionActivity
-import com.labteto.dshmobile.core.wire.dto.WorkspaceSessionActiveDetails
 import com.labteto.dshmobile.core.wire.dto.jobRowsOf
 import com.labteto.dshmobile.core.wire.dto.subagentEntriesFromCatalog
 import com.labteto.dshmobile.core.wire.dto.SubagentPromptRequest
@@ -279,8 +282,22 @@ data class PendingApproval(
     val approvalId: String,
     val rpcId: String,
     val toolName: String,
+    /** The reason in the reader's language where the harness sent one (`displayReason`), else the raw one. */
     val reason: String?,
+    /** The raw `reason`: the built-in runtime's `<tool>: <command>` format is read from this one. */
+    val rawReason: String? = reason,
+    /** More requests of the same session waiting behind this one; each is shown in turn. */
+    val waitingAfter: Int = 0,
 )
+
+/**
+ * Which open approval the panel shows: the one already on screen while it is open, else the
+ * oldest. A newer request never replaces the one being read.
+ *
+ * @param openIds the open requests' ids, oldest first.
+ */
+internal fun shownApprovalId(shownId: String?, openIds: List<String>): String? =
+    shownId?.takeIf { it in openIds } ?: openIds.firstOrNull()
 
 /** A pending ask_user_question batch (a plan review rides the same channel via its intent). */
 data class PendingQuestions(
@@ -350,8 +367,20 @@ class SessionStore @Inject constructor(
     private val featureAvailability = FeatureAvailability { setConnectionError(it.message) }
     val automationAvailable = featureAvailability.state(HarnessFeature.AUTOMATION)
     val pluginManagementAvailable = featureAvailability.state(HarnessFeature.PLUGIN_MANAGEMENT)
+    /** Whether the harness mounts the plugin market (`pluginMarket`); null until a call has told. */
+    val pluginMarketAvailable = featureAvailability.state(HarnessFeature.PLUGIN_MARKET)
     val timedQuestionsAvailable = featureAvailability.state(HarnessFeature.TIMED_QUESTIONS)
     val sessionReferencesAvailable = featureAvailability.state(HarnessFeature.SESSION_REFERENCES)
+    /** Whether the host answers `agentPresets/read`; null until a read has shown either way. */
+    val presetCompositionAvailable = featureAvailability.state(HarnessFeature.PRESET_COMPOSITION)
+    /** Whether the harness has `settings/describe`; unknown until the Harness settings page first asks. */
+    val harnessSettingsAvailable = featureAvailability.state(HarnessFeature.HARNESS_SETTINGS)
+    /**
+     * Whether the harness has the account calls behind DeepSeek sign-in. A harness with its account
+     * plugin switched off answers `gateway/service-unavailable`, which the Account page's port spells as a
+     * missing capability before it reports here. Unknown until the Account page first asks.
+     */
+    val accountAvailable = featureAvailability.state(HarnessFeature.ACCOUNT)
     val questionSessions = QuestionSessions(scope, { connectionManager.connectedApi },
         { connectionManager.generation?.mux }, { connectionManager.generation?.clientId },
         onCapability = { clientId, result ->
@@ -428,19 +457,29 @@ class SessionStore @Inject constructor(
         }
     }
 
-    suspend fun <T> featureCall(feature: HarnessFeature, api: DshApiClient, call: suspend () -> RpcResult<T>): RpcResult<T> {
-        val observe = featureObserver(feature)
+    suspend fun <T> featureCall(feature: HarnessFeature, api: DshApiClient, authoritative: Boolean = false, call: suspend () -> RpcResult<T>): RpcResult<T> {
+        val observe = featureObserver(feature, authoritative)
         val result = call()
         observe(api, result)
         return result
     }
 
-    private fun featureObserver(feature: HarnessFeature): (DshApiClient, RpcResult<*>) -> Unit {
+    /**
+     * Asks the harness again whether it mounts the plugin market. The answer is cached per connection, and the market
+     * is an optional bundle that is turned on and off while the app is connected, so the Plugins page asks again
+     * whenever plugin state may have changed (it opens, a bundle or plugin is switched, something is installed or
+     * removed, the harness says the plugins changed, Refresh). An answer here can turn the market on as well as off.
+     */
+    suspend fun recheckPluginMarket(api: DshApiClient) {
+        featureCall(HarnessFeature.PLUGIN_MARKET, api, authoritative = true) { api.marketIndexes() }
+    }
+
+    private fun featureObserver(feature: HarnessFeature, authoritative: Boolean = false): (DshApiClient, RpcResult<*>) -> Unit {
         val epoch = featureAvailability.generation()
         val clientId = connectionManager.generation?.clientId
         return { api, result ->
             if (clientId != null && clientId == connectionManager.generation?.clientId && api === connectionManager.connectedApi) {
-                featureAvailability.observe(feature, epoch, result)
+                featureAvailability.observe(feature, epoch, result, authoritative)
             }
         }
     }
@@ -449,6 +488,32 @@ class SessionStore @Inject constructor(
         val api = connectionManager.connectedApi ?: return
         scope.launch { featureCall(HarnessFeature.AUTOMATION, api) { api.automationCatalog() } }
         scope.launch { featureCall(HarnessFeature.PLUGIN_MANAGEMENT, api) { api.pluginBundles() } }
+        // `listIndexes` never fetches an index; it only says whether the market is there.
+        scope.launch { featureCall(HarnessFeature.PLUGIN_MARKET, api) { api.marketIndexes() } }
+    }
+
+    /** The cheap call that tells whether the harness has [feature] now, for the features that have one. */
+    private fun featureProbe(feature: HarnessFeature): (suspend (DshApiClient) -> RpcResult<*>)? = when (feature) {
+        HarnessFeature.AUTOMATION -> { api -> api.automationCatalog() }
+        HarnessFeature.PLUGIN_MANAGEMENT -> { api -> api.pluginBundles() }
+        HarnessFeature.HARNESS_SETTINGS -> { api -> api.settingsDescribe() }
+        // The same spelling the Account page's own port uses: a plugin that is off answers `gateway/service-unavailable`.
+        HarnessFeature.ACCOUNT -> { api -> api.accountState().withAccountCapability() }
+        else -> null
+    }
+
+    /**
+     * A bundle was switched on or off (`plugin-manager/changed`), so a feature the harness lacked may
+     * be there now. Whatever read "unavailable" is asked again, instead of staying hidden until the
+     * app reconnects.
+     */
+    private fun recheckFeatures() {
+        val api = connectionManager.connectedApi ?: return
+        val probes = HarnessFeature.entries.mapNotNull { feature -> featureProbe(feature)?.let { feature to it } }.toMap()
+        featureAvailability.relax(probes.keys).forEach { feature ->
+            val probe = probes.getValue(feature)
+            scope.launch { featureCall(feature, api) { probe(api) } }
+        }
     }
     private val permissionCatalog = MutableStateFlow<PermissionCatalog?>(null)
     private var permissionCatalogEpoch = 0L
@@ -611,21 +676,28 @@ class SessionStore @Inject constructor(
     val quotaStatus = quotaRepository.state
 
     /** Do not use `models.current`: that view prefers a queued next choice while a turn runs. */
-    fun quotaProvider(): String? = modelSelection.value?.let {
-        if (currentConversation.value?.running == true) it.lastUsed?.provider else (it.next ?: it.lastUsed)?.provider
-    }
+    fun quotaSelection(): ModelSelection? =
+        com.labteto.dshmobile.core.usage.quotaSelectionOf(modelSelection.value, currentConversation.value?.running == true)
 
-    private fun quotaIdentity(): String? {
+    fun quotaProvider(): String? = quotaSelection()?.provider
+
+    /** The connection the account balance and the "no subscriptions-auth" evidence belong to. */
+    private fun quotaHostKey(): String? {
         if (connectionManager.state.value.phase != ConnectionPhase.CONNECTED) return null
         val generation = connectionManager.generation ?: return null
         val host = connectionManager.state.value.host ?: return null
+        return "${host.id}|${host.baseUrl}|${generation.clientId}"
+    }
+
+    private fun quotaIdentity(): String? {
+        val host = quotaHostKey() ?: return null
         val sid = currentSessionId.value ?: return null
-        return "${host.id}|${host.baseUrl}|${generation.clientId}|$sid|${quotaProvider()}"
+        return "$host|$sid|${quotaProvider()}"
     }
 
     suspend fun refreshQuota(includeAll: Boolean = false, recheck: Boolean = false) = kotlinx.coroutines.withContext(Dispatchers.Main.immediate) {
         val identity = quotaIdentity()
-        quotaRepository.bind(identity)
+        quotaRepository.bind(identity, quotaHostKey())
         if (identity == null) return@withContext
         val api = connectionManager.connectedApi ?: return@withContext
         val metadata = com.labteto.dshmobile.core.wire.dto.AccountUiMetadata(
@@ -635,13 +707,13 @@ class SessionStore @Inject constructor(
         try {
             kotlinx.coroutines.withTimeoutOrNull(60_000) {
                 quotaRepository.refresh(identity, object : com.labteto.dshmobile.core.usage.UsageSource {
-                    override suspend fun status() = (api.subscriptionStatus() as? RpcResult.Ok)?.value
-                    override suspend fun quota(provider: String, account: String) = (api.subscriptionUsage(provider, account) as? RpcResult.Ok)?.value
-                    override suspend fun wallet() = (api.accountBalance(metadata) as? RpcResult.Ok)?.value
+                    override suspend fun status() = api.subscriptionStatus().toUsageFetch()
+                    override suspend fun quota(provider: String, account: String) = api.subscriptionUsage(provider, account).toUsageFetch()
+                    override suspend fun wallet() = api.accountBalance(metadata).toUsageFetch()
                 }, quotaProvider(), includeAll, recheck)
             }
         } finally {
-            if (quotaIdentity() != identity) quotaRepository.bind(quotaIdentity())
+            if (quotaIdentity() != identity) quotaRepository.bind(quotaIdentity(), quotaHostKey())
         }
     }
 
@@ -727,7 +799,8 @@ class SessionStore @Inject constructor(
     // Pending Remote Event waterfalls this store can answer. Keyed by the frame's `eventId`,
     // which is both what an answer names and what a `cancel` frame withdraws — 0.1.2 mints no
     // separate approval id.
-    private val approvalRequests = HashMap<String, ApprovalRequest>() // eventId -> request
+    // In arrival order: the panel shows the oldest, and the next one takes its place once answered.
+    private val approvalRequests = LinkedHashMap<String, ApprovalRequest>() // eventId -> request
     private val questionEvents = PendingQuestionRegistry()
 
     // Open-session fold state.
@@ -779,6 +852,7 @@ class SessionStore @Inject constructor(
         val eventId: String,
         val toolName: String,
         val reason: String?,
+        val rawReason: String? = reason,
     )
     private data class ProjectionValue(val seq: Int, val value: JsonElement)
 
@@ -796,7 +870,7 @@ class SessionStore @Inject constructor(
         }
         scope.launch(Dispatchers.Main.immediate) {
             combine(connectionManager.state, currentSessionId, modelSelection, currentConversation) { _, _, _, _ -> quotaIdentity() }
-                .collect { quotaRepository.bind(it) }
+                .collect { quotaRepository.bind(it, quotaHostKey()) }
         }
         observeConnection()
         observeEvents()
@@ -1081,6 +1155,7 @@ class SessionStore @Inject constructor(
             }
             "api-session/error" -> setConnectionError(str(1))
             "commands/change" -> scope.launch { refreshCommands() }
+            "plugin-manager/changed" -> recheckFeatures()
             "agent-preset/selected" -> scope.launch {
                 refreshAgentPresets()
                 refreshCommands()
@@ -1141,10 +1216,12 @@ class SessionStore @Inject constructor(
         val approval = synchronized(lock) { approvalRequests.remove(eventId) }
         if (approval != null) {
             synchronized(lock) {
-                removePendingLocked(approval.sessionId, "approval")
+                // Another request of the session may still be open: the session still needs you.
+                if (approvalRequests.values.none { it.sessionId == approval.sessionId }) removePendingLocked(approval.sessionId, "approval")
                 emitSessionsLocked()
+                if (_pendingApproval.value?.approvalId == eventId) _pendingApproval.value = null
+                publishApprovalLocked()
             }
-            if (_pendingApproval.value?.approvalId == eventId) _pendingApproval.value = null
             return
         }
         val sessionId = synchronized(lock) {
@@ -1423,19 +1500,35 @@ class SessionStore @Inject constructor(
         val reason = request.reasonFor(java.util.Locale.getDefault().language)
         synchronized(lock) {
             approvalRequests[eventId] =
-                ApprovalRequest(sessionId, eventId, request.toolName, reason)
+                ApprovalRequest(sessionId, eventId, request.toolName, reason, request.reason)
             addPendingLocked(sessionId, "approval")
             emitSessionsLocked()
+            publishApprovalLocked()
         }
-        _pendingApproval.value = PendingApproval(
-            sessionId = sessionId,
-            // The event id is the approval id now: 0.1.2 correlates a pending request by the
-            // frame's own `eventId` and mints nothing separate.
-            approvalId = eventId,
-            rpcId = eventId,
-            toolName = request.toolName,
-            reason = reason,
-        )
+    }
+
+    /**
+     * Show the oldest open request, with how many of its session wait behind it.
+     *
+     * Oldest first, and never replaced by a newer one while it is open: two commands asked for at
+     * once (parallel tool calls) used to swap the panel's text under a thumb already on Allow, and
+     * the first request, no longer shown, could not be answered at all.
+     */
+    private fun publishApprovalLocked() {
+        val shownId = shownApprovalId(_pendingApproval.value?.approvalId, approvalRequests.keys.toList())
+        _pendingApproval.value = shownId?.let { approvalRequests[it] }?.let { request ->
+            PendingApproval(
+                sessionId = request.sessionId,
+                // The event id is the approval id now: 0.1.2 correlates a pending request by the
+                // frame's own `eventId` and mints nothing separate.
+                approvalId = request.eventId,
+                rpcId = request.eventId,
+                toolName = request.toolName,
+                reason = request.reason,
+                rawReason = request.rawReason,
+                waitingAfter = approvalRequests.values.count { it.sessionId == request.sessionId } - 1,
+            )
+        }
     }
 
     private fun handleQuestionRequested(
@@ -2289,24 +2382,31 @@ class SessionStore @Inject constructor(
     suspend fun archiveSession(sessionId: String, stopActivity: Boolean = false, report: Boolean = true): ArchiveOutcome {
         val api = apiOrNull() ?: return ArchiveOutcome.Failed
         val request = WorkspaceArchiveSessionRequest(sessionId, stopActivity = stopActivity.takeIf { it })
-        return when (val r = api.workspaceArchiveSession(request)) {
+        val result = api.workspaceArchiveSession(request)
+        val outcome = archiveOutcomeOf(sessionId, stopActivity, result)
+        when (result) {
             is RpcResult.Ok -> {
-                setArchived(r.value.archivedSessionIds)
+                setArchived(result.value.archivedSessionIds)
                 refreshSessions()
-                ArchiveOutcome.Archived
             }
-            is RpcResult.Err -> {
-                if (r.error.code == SESSION_ACTIVE && !stopActivity) {
-                    val details = runCatching {
-                        decodeFromJsonElement(WorkspaceSessionActiveDetails.serializer(), r.error.details)
-                    }.getOrNull()
-                    ArchiveOutcome.Busy(sessionId, details?.activity.orEmpty())
-                } else {
-                    if (report) setConnectionError(r.error.message)
-                    ArchiveOutcome.Failed
-                }
-            }
+            is RpcResult.Err -> if (outcome is ArchiveOutcome.Failed && report) setConnectionError(result.error.message)
         }
+        return outcome
+    }
+
+    /**
+     * What this client already knows about work running in [session], for the Archive dialog: its
+     * turn, and, for the session that is open, the jobs and subagents the panels show. Empty means
+     * nothing known, not idle; the host's refusal still catches the rest.
+     */
+    fun knownActivityOf(session: SessionRow?): List<SessionActivity> {
+        if (session == null) return emptyList()
+        val open = session.sessionId == currentSessionId.value
+        return knownArchiveActivity(
+            turnRunning = session.running,
+            jobs = if (open) _jobs.value else emptyList(),
+            subagents = if (open) _subagents.value else emptyList(),
+        )
     }
 
     /** Pin or unpin one session (harness 0.1.7); the answer is the complete pin set. */
@@ -2527,7 +2627,10 @@ class SessionStore @Inject constructor(
         if (request == null) {
             log("no pending approval for id $approvalId")
             // Nothing to answer with, so nothing can arrive to take the panel away either.
-            if (_pendingApproval.value?.approvalId == approvalId) _pendingApproval.value = null
+            synchronized(lock) {
+                if (_pendingApproval.value?.approvalId == approvalId) _pendingApproval.value = null
+                publishApprovalLocked()
+            }
             return QuestionOutcome.Refused(NOT_PENDING)
         }
         val clientId = connectionManager.generation?.clientId
@@ -2891,6 +2994,26 @@ class SessionStore @Inject constructor(
             is RpcResult.Ok -> upsertWorkspace(r.value.workspace)
             is RpcResult.Err -> setConnectionError(r.error.message)
         }
+    }
+
+    /**
+     * Register [path] as a workspace (the harness answers the existing one for a known path) and
+     * open a session in it: "open this project" in one step. False when not connected or refused.
+     */
+    suspend fun openWorkspaceSession(path: String): Boolean {
+        val api = apiOrNull() ?: return false
+        val workspaceId = when (val r = api.workspaceCreate(WorkspaceCreateRequest(path))) {
+            is RpcResult.Ok -> {
+                upsertWorkspace(r.value.workspace)
+                r.value.workspace.workspaceId
+            }
+            is RpcResult.Err -> {
+                setConnectionError(r.error.message)
+                return false
+            }
+        }
+        createSession(workspaceId = workspaceId)
+        return true
     }
 
     suspend fun renameWorkspace(id: String, title: String) {
@@ -3379,9 +3502,6 @@ class SessionStore @Inject constructor(
          * `attachment-error` through 0.1.2). Every business code is namespaced now.
          */
         const val ATTACHMENT_INVALID = "session/attachment-invalid"
-
-        /** Harness 0.1.7's refusal to archive a session with running work; see [archiveSession]. */
-        const val SESSION_ACTIVE = "workspace/session-active"
 
         /** [movesInFlight]'s key for a reorder of the workspaces themselves rather than of one's sessions. */
         private const val WORKSPACE_ORDER_KEY = "\u0000workspaces"

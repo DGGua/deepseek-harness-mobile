@@ -5,7 +5,389 @@ All notable changes to DSH Mobile are documented here. Format based on
 
 ## [Unreleased]
 
+## [0.24.0] - 2026-11-19
+
+![Three phones: the Plugins page as a short list, a chat with a task list and a background command, and a Harness settings page](docs/images/releases/0.24.0/devices/hero-whats-new.png)
+
 ### Added
+
+- **Change the harness's own settings from the app.** Settings, **Harness settings** lists what the
+  connected harness lets a client change: **Web search**, **Shell**, **Subagents**, **Agent loop** and
+  **Session log**, and any other settings the harness offers a page for. Until now these could only
+  be changed on the harness's own web page, which a phone-only user does not have. Web search
+  switches between Messages search and the Search and Fetch APIs, sets the endpoint and the results
+  per search, and keeps the API key on the harness: the key is never shown, only whether one is set,
+  and it can be replaced or removed (the page says when the same key also serves the DeepSeek model
+  provider, so removing it would stop chat too). Shell sets the command timeout and the output cap.
+  Subagents sets how deep and how many may run, and which models an agent may choose for them. Agent
+  loop sets the parallel tool calls, and Session log the upload switch. Switches and choices save as
+  soon as you touch them; numbers and addresses save on Done or when you leave the field. A field
+  that is empty or out of range is explained next to it before anything is sent, a setting you have
+  changed is marked **Changed** with a **Reset to default** button, and a change the harness refuses
+  puts the old value back and says why. A harness that cannot describe its settings does not show
+  the row.
+
+  <img src="docs/images/releases/0.24.0/devices/harness-settings-page-phone.png" alt="Harness settings, Subagents: the Maximum depth field marked Changed, with its Reset to default button" width="260">
+
+- **Sign in to DeepSeek from the app.** Harness settings has a new **Account** page. When the
+  harness runs on this phone's own address, **Sign in** opens DeepSeek's sign-in in your browser,
+  waits for it, and picks the result up when you come back to the app, even if the app was closed in
+  between. **Cancel sign-in** ends an attempt that is under way, and how the last one ended
+  (cancelled, timed out or failed, and why) stays on the page, under "Not signed in", until you start
+  the next one. Once you are signed in the page shows the account and offers **Sign out**. A harness
+  on another computer cannot be signed in from a phone: DeepSeek sends the browser back to an
+  address that only works on the same device as the browser, which from a phone is the phone itself.
+  For those the page says so and asks you to sign in on that computer. A harness without account
+  support does not show the page. Only the sign-in up to the browser opening, and its cancellation,
+  has been tried against DeepSeek's real sign-in page.
+
+  <img src="docs/images/releases/0.24.0/devices/account-sign-in-phone.png" alt="The Account page waiting for a sign-in, with Open browser, Copy sign-in link and Cancel sign-in" width="260">
+
+- **Discover on the Plugins page: browse a plugin market and install from it.** A harness with the
+  optional "custom plugin markets" bundle on shows **Installed** and **Discover** at the top of the
+  Plugins page as soon as the bundle is switched on, with no restart; without it the page is exactly
+  as before. The harness fetches and checks each market's list, so the phone never reads an index
+  from the internet itself. Discover lists a market's plugins as cards (name, one line, version,
+  publisher, and a word when you already have it, when an update is available or when it needs a
+  newer harness), with search and a chip for each category and label the market declares. A card
+  opens the plugin's own page: the full description, whether it works with this harness, who
+  publishes it, exactly where it installs from (the package, or the repository and commit), and one
+  button. **Markets** adds or removes the lists the harness reads, and a market that cannot be read
+  gets its own notice with **Retry** while the others carry on. Installing goes through the same
+  confirmation as the manual install, which shows the exact package or repository and warns that a
+  market's plugin is third-party code. The harness looks at the package first; if it is not the
+  package the market listed, or the harness's package tool fails (the built-in harness has no pnpm),
+  it says so and installs nothing. What a market lists is capped, so a broken or hostile list cannot
+  freeze the page.
+
+  <img src="docs/images/releases/0.24.0/devices/discover-phone.png" alt="Plugins, Discover: a market's plugins as cards, with category chips and a Markets button" width="260">
+
+- **See where a turn's time went, and open any record.** Under each turn in the Trajectory tab, one
+  stacked bar shows how its time split between waiting for the first token, the model writing,
+  tools running, waiting for your approval and everything else, with a legend that gives every
+  label, time and percentage in words, so nothing depends on colour. A card above the turns adds the
+  loaded session up: time, turns, model replies, tool calls (with how many failed or were stopped)
+  and tokens. Tap a turn to see its records, and tap a model reply or a tool call to open its
+  inspector: kind, status, start, duration, time to first token, token counts, the model, and its
+  input and output with **Copy**. **Show raw JSON** keeps the logged events one explicit tap away. A
+  number the harness did not record is left out, never shown as zero. A call you stopped shows as
+  **Stopped**. Tapping a tool call now opens the inspector instead of unfolding a short preview in
+  place.
+
+  <img src="docs/images/releases/0.24.0/devices/trajectory-timing-phone.png" alt="The Trajectory tab: Where the time went, with a stacked bar, its legend and the session's totals" width="260">
+  <img src="docs/images/releases/0.24.0/devices/trajectory-inspector-phone.png" alt="The inspector of a stopped PowerShell call: status Stopped, its input and its output" width="260">
+
+- **See an agent team at work (Beta).** When the harness has the experimental Agent Teams bundle
+  switched on, a **Team** chip appears beside the chat title. It opens the team: who is on it, what
+  each teammate is for and whether they are working, starting or failed, and the shared task board
+  grouped into In progress, Ready to start, Waiting and Done, with what each task waits on, the files
+  it plans to change and who owns it. Tap a teammate, or a task's owner, to open that teammate's
+  chat in the Subagents sheet, where you can follow it, send it a message or stop it. The list
+  updates live. The team sheet is read-only, like the web app's: the agents create teammates and
+  tasks themselves, and you ask the lead in the chat to change them. A harness without Agent Teams
+  shows nothing new.
+
+  <img src="docs/images/releases/0.24.0/devices/agent-team-sheet-phone.png" alt="The Agent team sheet on Tasks: one task in progress, one ready to start, one waiting and one done" width="260">
+
+- **See what an agent preset is made of.** In the agent preset sheet, **View contents** opens a
+  read-only page that lists the plugins a preset mounts, says for each whether it is always on, off
+  or depends on a condition on the host, and keeps the exact YAML one tap away (**Copy everything as
+  YAML**, and **Settings (YAML)** for each plugin). The harness (0.2.1) accepts no edits to a preset,
+  because presets change by installing a plugin bundle, so this page reads and never writes. A host
+  that cannot show a preset hides the button.
+
+### Changed
+
+- **The Plugins page is a short list, and each bundle opens on its own page.** A bundle with a
+  hundred modules used to put a switch for every one of them on its card, so the page ran on for
+  screens. Each bundle is now one card with its name, version, how many of its modules are on, its
+  own switch and a chevron; tapping the card opens the bundle's page. A bundle the harness locks has
+  a lock and the word **Enabled** or **Disabled** where the switch would be, because a dimmed switch
+  looked off when the bundle was on. Search and the **All**, **On** and **Off** chips, each with its
+  count, stay pinned at the top of the list, with **Install or update** and **Create plugin** side
+  by side below them. When a search matches module names, the card names up to three of them. The
+  bundle's page has the full description, the switches first and the modules the harness locks last,
+  with the reason said once for each group instead of under every row (plugins that belong to no
+  bundle are grouped the same way on the list), and full-width **Update** and **Remove** buttons at
+  the end. A bundle with more than eight modules gets a search and chips of its own there, and two
+  modules that share a name show the id that tells them apart. Names no longer start with
+  `@deepseek-ai/dsh-`, so the part that tells them apart is the part you can read. (#122)
+
+  <img src="docs/images/releases/0.24.0/devices/plugins-list-phone.png" alt="The Plugins page: Installed and Discover, search, chips, Install or update beside Create plugin, a locked group and bundle cards" width="260">
+  <img src="docs/images/releases/0.24.0/devices/plugin-bundle-page-phone.png" alt="A bundle's page: its switches, then the group the harness locks, with the reason said once" width="260">
+
+- **Every common tool call reads as what it did, not as JSON.** The task list, questions, subagents,
+  skills, image reads, background jobs, terminals, code lookups, goals, reminders and shared files
+  each have a row of their own: the task list says "3 of 7 done" and what changed, a question shows
+  your answer beside it, and a subagent row says what it is working on and opens it in the Subagents
+  sheet. A command run in the background shows the command and where it runs, with **Open job**
+  instead of the raw job id. A failed call keeps its own card (the command it ran, the edit it tried)
+  with one plain line saying why, including Auto review refusals and turn errors such as a busy
+  provider or a chat too long for the model. A command that only exited non-zero still shows its
+  output with its exit code. The raw metadata under each card and **Show raw JSON** beside each
+  output have moved to the call's hold menu, and a tool with no view of its own gets a readable
+  title with its arguments folded away. PowerShell rows say PowerShell.
+
+  <img src="docs/images/releases/0.24.0/devices/chat-task-list-phone.png" alt="A chat at Fully expanded: a task list saying 2 of 5 done, with what was added and changed" width="260">
+  <img src="docs/images/releases/0.24.0/devices/chat-background-command-phone.png" alt="A command run in the background: the command, where it runs, Running, and Open job" width="260">
+
+- **Command output, file reads, diffs and code in messages keep their columns.** Code in a tool card
+  no longer wraps mid-line: it scrolls sideways as one piece, the line numbers or the `+`/`-` stay in
+  place, a fading edge shows there is more, and **Wrap lines** in the block turns wrapping on for
+  prose. Code blocks in the assistant's messages now do the same, with a **Wrap lines** switch in the
+  block's header; they used to wrap. File reads are coloured by language, as code in messages is. An
+  open tool row only ever shows the start of a long result, however you opened it (the preview is
+  now 24 lines, it was 40), and **Show all** opens the whole output in a full-screen page that stays
+  smooth on a 200,000-line log, lets you select text, copy it all and search it. Step outcomes in the
+  compact rows are now icons with spoken names (running, done, failed, stopped) instead of "!", "…",
+  "✓" and "■", and a step's time sits in its row. A command you stopped reads as stopped, in amber,
+  with one **Stopped** label and no failed count. Paths, commands and JSON in these cards stay left
+  to right in Arabic and Urdu. The run statistics under the message box scroll sideways so the cache
+  figure can be read, and the "no model provider is ready" notice is a bar pinned above the
+  conversation, so it stays in view and does not cover a message.
+
+  <img src="docs/images/releases/0.24.0/devices/output-viewer-phone.png" alt="The full-screen output viewer showing a long PowerShell log, with search and Copy all" width="260">
+  <img src="docs/images/releases/0.24.0/devices/stopped-command-phone.png" alt="A stopped command in amber: Stopped before it finished, with one Stopped label" width="260">
+
+### Fixed
+
+- **A harness reached on this phone's own address is found again after the app is closed.** Typing or
+  pasting `127.0.0.1` or `localhost` into Local network remembers the harness under **This phone**,
+  but the screen stayed on Local network, so after the app's process ended (the browser trip of a
+  sign-in is a good time for Android to do that) it opened on an empty Recent list and asked for the
+  link and token again. The screen now moves to **This phone** when you connect that way, and opens
+  there next time.
+- **Rows, cards and list items show that they are pressed again.** Holding a tool row in the chat,
+  a Settings row, an accent colour or a Trajectory row changed nothing on screen; only buttons,
+  chips and icon buttons answered. Every tappable item now takes a light tone while it is held (and
+  while a mouse points at it on a Chromebook), the same tone a pressed card shows, and a quick tap
+  is held long enough to see. The keyboard focus ring is unchanged.
+- **Turning the phone with a full-screen page open no longer leaves it blank.** Plugins, Models and
+  API keys, the Workspace panel and every other full-screen page went empty after a rotation, in
+  either direction, until it was closed and opened again. The page now lays itself out again for the
+  new shape, and the same holds when split screen changes the app's size.
+- **Changing the text size, display size, dark mode or language with the Plugins or Harness settings
+  page open keeps you there.** The app went back to the top of Settings, and the search, the chosen
+  chip and the open bundle on Plugins, or the open page on Harness settings, were lost. They now
+  come back as they were. What you were typing is not kept: a key on the Web search page comes back
+  as an empty, closed field, and a confirmation dialog is not reopened.
+- **Back closes a full-screen page on the second press when a text field has the keyboard up.** On
+  Android 11, where Back is a key press, the focused search field took the second press, so
+  the Plugins page needed three. The first Back now hides the keyboard and the second closes the
+  page; the output viewer's search works the same way.
+
+## [0.23.0] - 2026-11-17
+
+![Three phones: the Subagents sheet with its Close button, a chat at Fully expanded, and the Stop and archive dialog](docs/images/releases/0.23.0/devices/hero-whats-new.png)
+
+### Added
+
+- **Choose how much of the agent's work the chat shows.** Settings, **Chat**, **Work steps** has four
+  levels: **Compact**, **Standard**, **Detailed** and **Fully expanded**, each with a line saying what
+  it changes. Compact is the chat as it was and stays the default. Standard also names the step a
+  running group is on and shows the first line of the thinking. Detailed shows the running turn's
+  tool calls one by one instead of in a group. Fully expanded folds and groups nothing, opens tool
+  calls by itself and cuts very long output to its start with **Show all**. The level applies to the
+  chat, to a replayed session and to the subagent sheet; the Trajectory tab and the Details panel
+  look the same at every level. Tapping a row still opens or closes just that row. The choice stays
+  on this device and the host's settings are not touched. (#115)
+
+  <img src="docs/images/releases/0.23.0/devices/work-steps-picker-phone.png" alt="Settings, Chat: the Work steps picker with Compact, Standard, Detailed and Fully expanded" width="260">
+  <img src="docs/images/releases/0.23.0/devices/work-steps-compact-vs-fully-expanded.png" alt="The same chat at Compact, where the work is one folded row, and at Fully expanded, where the build command is already open" width="520">
+
+- **Translate a thought process on its own.** Settings, **Chat**, **Auto-translate thought process**
+  is off by default. When it is on, a thought process you open is translated once it has finished
+  and has stayed on screen for a moment, with the same provider and language as the **Translate**
+  button. Each translation sends the text to that provider; a model provider uses your tokens, Bing
+  and Google do not, and the switch says so. It also says when the connected harness has no
+  translation set up. At most two requests run at once, and a thought already written in your
+  language is skipped when the script makes that clear. Each thought is translated once:
+  translations are kept between opening, scrolling, reconnecting and restarting the app, and the
+  button and the switch share them. The original is one tap away. A failure keeps the original with
+  a **Retry**, and a failed thought is not tried again by itself. Leaving the session or turning the
+  switch off stops the requests. The closed row's preview line stays in the original language. (#113)
+
+  <img src="docs/images/releases/0.23.0/devices/auto-translate-switch-phone.png" alt="Settings with the Auto-translate thought process switch on" width="260">
+  <img src="docs/images/releases/0.23.0/devices/translated-thought-phone.png" alt="An opened thought process shown in English with a Show original link" width="260">
+
+### Fixed
+
+- **Archiving a session with work running asks once, and says what is running.** When the app already
+  knows that a turn, a background job or a subagent is running, Archive opens **Stop and archive**
+  straight away instead of a plain confirm first. The dialog lists the running work, with a
+  background job's command line, and says that stopped work will not carry on by itself and that the
+  session can be resumed from Archived sessions. For a chat that is not open, the drawer only knows
+  whether a turn is running. (#114)
+
+  <img src="docs/images/releases/0.23.0/devices/stop-and-archive-phone.png" alt="The Stop and archive dialog listing a background job's command line" width="260">
+
+- **Every sheet has a way out, and short sheets no longer start with an empty band.** A sheet with a
+  long transcript or the keyboard up fills the screen, so no dimmed area is left to tap, and a swipe
+  down from inside a long list scrolls the list instead of the sheet. Every sheet with a title now
+  has a **Close** button at the end of its title row (the start side in right-to-left languages),
+  still in reach after scrolling to the end and with the keyboard up. Back no longer gets stuck
+  behind a focused text field: on Android 11, with the keyboard up, the first back hid the keyboard,
+  the second did nothing and only the third closed the sheet; now the second one does. Sheets used
+  to leave room above the grabber for the status bar even when they sat halfway down the screen, so
+  a sheet with a single row looked pushed down. That room is now added only when a sheet actually
+  reaches the status bar, and the title and Close button stay clear of it. Close does the same job as
+  the **Done** button in the model picker and the **Cancel** button in the custom accent sheet, so
+  those two are gone; **Apply** stays. Tapping the dimmed strip over the status bar still does not
+  close a sheet, because Android gives that touch to the status bar.
+
+  <img src="docs/images/releases/0.23.0/devices/sheet-close-full-phone.png" alt="The Subagents sheet at full height with its Close button at the end of the title row" width="260">
+  <img src="docs/images/releases/0.23.0/devices/sheet-close-keyboard-phone.png" alt="The same sheet with the keyboard up and the Close button still in reach" width="260">
+
+## [0.22.0] - 2026-11-16
+
+![The built-in harness on a phone: the Connect card, the set-up page and the harness page, each marked Beta](docs/images/releases/0.22.0/devices/hero-built-in-harness.png)
+
+### Added
+
+- **The harness on the phone itself: no computer needed (Beta).** This is new, so the app marks it
+  **Beta** on the Connect card, the set-up page and the harness page. It was tested on emulators
+  (Android 11, 15 and a desktop image) and on one Samsung phone, and it may not work on every phone
+  yet; a harness on your computer or in Termux works as before. On a 64-bit phone with Android 8.0 or
+  newer, **This phone** now offers **Set up**: the app downloads a small Linux system with Node.js
+  and the DeepSeek Harness (about 155 MB, about 1.1 GB on the phone), checks its signature and every
+  file, unpacks it, starts it and signs in, with no Termux and no command line. A new install on such
+  a phone opens on This phone; anyone who already picked a mode keeps it, and Local network, Relay
+  and Termux are where they were. The harness page (Settings, **Harness on this phone**) has start,
+  stop and restart, versions and uptime, storage, the log, and a **Keep it running** checklist. The
+  guide is [`harness/ON-DEVICE.md`](harness/ON-DEVICE.md).
+
+  <img src="docs/images/releases/0.22.0/devices/beta-connect-card-phone.png" alt="The Connect screen on This phone, with the built-in harness card, its Beta tag and Set up" width="260">
+  <img src="docs/images/releases/0.22.0/devices/beta-setup-phone.png" alt="The set-up page with the Beta tag and the sentence saying it is new" width="260">
+  <img src="docs/images/releases/0.22.0/devices/beta-control-page-arabic-phone.png" alt="The harness page in Arabic, right to left, with the Beta tag next to the title" width="260">
+
+- **The harness comes back after an app update.** Installing an app update from inside the app
+  closes the app, and the harness with it. If the harness was running (or is set to start with the
+  app), it now starts again by itself once the update is in, without opening the app. If Android
+  does not allow that in the background, it starts the next time you open the app. A harness you
+  stopped stays stopped.
+
+- **Harness updates without an app update.** The app checks for a new harness release when it
+  opens and once a day, tells you once, and installs it when you tap Update (it asks first on a
+  metered network). **Install updates by themselves** does it on Wi-Fi while no chat is working. A
+  release that does not start is replaced by the one before it on its own, and **Go back** returns
+  to the previous release.
+
+- **Models and API keys in the app.** Settings, **Models** lists the providers the harness knows,
+  with Ready or Needs an API key. Paste a key, optionally a different address, and save; the key goes
+  to the harness and the app keeps no copy. The chat points there when a message could not reach a
+  model.
+
+- **What happens when the agent runs a command.** A phone has no sandbox for the agent's commands,
+  so the built-in harness offers **Run it** or **Ask me first**. Ask me first shows every command
+  whole before it runs (a long one opens in full), and a command too long to show (over 256 KB) is
+  not run. Each refusal says why in your language: you said no, the question was withdrawn, a helper
+  agent cannot ask, nobody was there to answer.
+
+  <img src="docs/images/on-device/approval.png" alt="A command shown in full with Don't allow and Allow once" width="200">
+
+- **Projects on the phone.** Start a session in a new empty project, a cloned Git repository
+  (public, or private with a token used once), an imported folder or a .zip. Projects show up in the
+  system Files app under **DSH Mobile**, and each one can be shared as a zip or saved to the phone.
+
+  <img src="docs/images/on-device/projects.png" alt="Projects on this phone, with a cloned repository" width="200">
+
+- **Update the app from inside the app.** The update dialog and Settings, About offer **Download
+  and install**: the APK is downloaded inside the app, checked against the release's `SHA256SUMS.txt`
+  and its signature, and handed to Android's installer. After the first time, later updates can go
+  through without a prompt. **Notify me about new app versions** is an optional daily check.
+  App updates and harness updates have their own switches and their own notification channels.
+
+### Fixed
+
+- **Every bottom sheet title in Arabic broke before its last letter** ("السجل" read "السج / ل").
+  Sheet and dialog titles now take the full width.
+- **Keeping the connection in the background could crash the app on Android 12 and newer.** The
+  keep-connected service was started the strict way on every reconnect, including ones in the
+  background where Android refuses it. It now starts the same safe way as the built-in harness's
+  service. A refusal is no longer a crash; the app asks again the next time it is on screen.
+- **Keep connected in background stopped after six hours a day on Android 15.** Its service was
+  of a kind Android 15 limits to six hours a day. It is now the same kind as the built-in harness's
+  service, which has no such limit.
+- **A tool call with a huge argument could freeze the app.** A command of a few hundred KB made
+  the chat row lay out the whole text and the app run out of memory. Rows and cards now show the
+  start of it; the call keeps every byte.
+
+- **One compaction is one row in the chat, not a stack of identical ones.** The transcript showed
+  a "Compacted: Summary" row for every event the harness writes around a compaction: one when it
+  starts, one with the summary, one when it ends, plus another for each model-free prune. Only the
+  summary row had anything to open, so a long conversation filled with look-alike rows, two thirds
+  of them empty (closes #98). Now only the summary draws, so a compaction is a single row you can
+  open to read what was kept, and starts, ends and prunes stay out of the way. A summary the
+  harness sent without any text keeps its row but no longer offers an empty expansion. The session
+  history is untouched: every event is still in the log and in Trajectory.
+
+- **Goal actions stay reachable with long text.** A long goal now scrolls inside a capped region
+  in the chat dock and the details panel, so Pause, Edit and Clear stay on screen. The Edit Goal
+  dialog keeps Cancel and OK visible above the keyboard, and every confirm dialog (including Clear
+  Goal) now keeps its buttons pinned below its scrolling text (closes #102).
+
+## [0.21.1] - 2026-11-14
+
+### Fixed
+
+- **Tool results show their text instead of a tree of nested JSON.** A tool's result used to be
+  drawn as a generic JSON tree, so reading a background job's output meant opening Output, `0`,
+  `type`, `text` and `text` again, with a Copy button on every level, before the log appeared
+  (closes #97). The text now shows directly under the tool card and Copy copies exactly that text.
+  Results wrapped in a list of typed text blocks, in an `output` or `content` envelope, or in text
+  that is itself the JSON of another block list are unwrapped, while a result with real fields of
+  its own, such as an exit code beside the output, stays readable as structured data. **Show raw
+  JSON** swaps in the original result untouched and **Copy raw JSON** copies it, so nothing is out
+  of reach. Terminal, diff, read, search and web cards already present their result, so there the
+  same text waits behind the Output row. The hold menu's "Copy output" and the red failure line
+  read results the same way.
+
+  <img src="docs/images/releases/0.21.1/tool-output-shown-as-text.png" alt="A background job's build log shown directly under the tool card, with Copy and Show raw JSON" width="260">
+  <img src="docs/images/releases/0.21.1/tool-output-raw-json-view.png" alt="The same output switched to its original JSON, with Hide raw JSON and Copy raw JSON" width="260">
+
+- **Tapping anywhere else in the chat clears a text selection.** Pressing and holding a word starts
+  a selection, but its highlight, handles and the Copy / Select all toolbar stayed on screen when
+  you tapped the next paragraph, the gap between messages or a card, and with Thinking, tool or
+  context cards open there was even more screen that could not dismiss it (closes #90). One tap
+  outside the selection now clears it, cards open or closed. The tap still does its normal job: it
+  toggles a card, presses a button, opens a link or shows a message's actions. Scrolling, dragging a
+  handle, a long press and the toolbar's Copy and Select all leave the selection alone, and with no
+  selection a tap on a reply leaves the keyboard and the draft as they were.
+
+  <img src="docs/images/releases/0.21.1/text-selection-active.png" alt="A word selected in a reply, with its handles and the Copy and Select all toolbar showing" width="260">
+  <img src="docs/images/releases/0.21.1/text-selection-cleared-by-tap.png" alt="The same chat after tapping another paragraph, with the selection and toolbar gone" width="260">
+
+- **Plugin records stay out of the chat, and the translate button names its provider properly.**
+  After translating a reasoning block, `plugin:translator/request` and `plugin:translator/result`
+  showed up as raw rows in the conversation, live and again when the session was reopened (closes
+  #96). The harness marks those records as safe to skip and the chat now honours it. The Trajectory
+  tab and the raw journal still list them, and records the harness does not mark, like every type
+  the app knows how to draw, still show. The translate button also printed an internal route name
+  such as `deepseek-account`; it now reads Translate with DeepSeek, DeepSeek API, Bing or Google,
+  whichever route the host offers, and a route the app has not met is spelled out in plain words.
+
+  <img src="docs/images/releases/0.21.1/plugin-records-hidden-from-chat.png" alt="A translated reasoning block in the chat with no plugin rows around it, and a Show original link" width="260">
+  <img src="docs/images/releases/0.21.1/translate-button-deepseek-api-label.png" alt="The translate button under a reasoning block reading Translate with DeepSeek API" width="260">
+
+## [0.21.0] - 2026-11-14
+
+![DSH Mobile 0.21.0 on a tablet, a Chromebook, a flip phone, a phone and a foldable](docs/images/releases/0.21.0/devices/hero-devices.png)
+
+### Added
+
+- **The composer lifts into a drawer for long prompts, with a full-screen editor and a tray for
+  attachments.** Once a draft wraps past one line, the message box lifts into a drawer over the chat,
+  sized to a bounded part of the room above the keyboard, and the row with attach, mention, the
+  permission chip and send stays in view however long the prompt gets. Pasting a few thousand
+  characters no longer hides send behind the keyboard (closes #87). A button on the drawer opens a
+  full-screen editor for the really long ones, with back, mention, attach, the permission shield and
+  send along the top. It edits the same draft, so nothing is copied or lost on the way in or out.
+  Attached files now sit in a tray on top of the message box, and on the editor's page too: it
+  unfolds with the first file and folds away after the last one is removed. The drawer, the editor
+  and the tray all move with short animations instead of jumping.
+
+  <img src="docs/images/releases/0.21.0/devices/composer-tray-phone.png" alt="The composer drawer with two attached files in the tray above it" width="260">
+  <img src="docs/images/releases/0.21.0/devices/fullscreen-editor-phone.png" alt="The full-screen editor with the same two files in its tray" width="260">
 
 - **A default send mode for prompts sent while a turn is running.** Settings → Chat now offers
   **Default send mode**, Queue or Steer, so a reader who always wants one of them no longer flips
@@ -14,7 +396,60 @@ All notable changes to DSH Mobile are documented here. Format based on
   default; holding send still chooses the mode for one message alone. Upgrades keep Queue, so
   nothing changes until the choice is made.
 
+- **A layout for tablets and foldables.** The app was one phone screen stretched to whatever it was
+  given. It now follows Android's window size classes: a phone, a Flip's inner and cover screens and
+  any window under 600dp wide keep exactly the phone layout. From about 620dp the chat list becomes a
+  pane beside the chat, with a button in the top bar to hide it. On windows 1180dp wide and up
+  (tablets in landscape, an unfolded Fold with room) Details docks as a third pane you can close, and
+  the conversation and composer stop at a comfortable reading width and centre in their pane. A
+  landscape phone gets the list beside the chat but never three panes. The Connect, Pair and Settings
+  forms hold a readable width instead of running edge to edge.
+
+  Folds are respected. With the device half open like a book, the boundary between the panes lands
+  on the hinge, so the chat list is one half and the chat the other and nothing sits on the crease.
+  Propped half open like a laptop (a Flip, or a Fold turned sideways), the transcript sits above the
+  hinge and the composer and its controls below it, with the keyboard in the lower half. The window
+  can be resized freely: rotating, folding, unfolding and dragging the split-screen divider no longer
+  restart the activity, so the draft, the attachment tray, the open session, an open sheet and the
+  scroll position stay where they were.
+
+  <img src="docs/images/releases/0.21.0/devices/tablet-three-pane.png" alt="A tablet in landscape with the session list, the chat and Details side by side" width="360">
+  <img src="docs/images/releases/0.21.0/devices/fold-book.png" alt="A foldable half open like a book, with the list on one half and the chat on the other" width="300">
+  <img src="docs/images/releases/0.21.0/devices/flip-tabletop.png" alt="A flip phone propped half open, with the chat above the hinge and the composer below it" width="180">
+
+- **Works on Chromebooks and in desktop windows.** The app is now installable on a Chromebook (a
+  touchscreen, a camera and Wi-Fi are all optional), opens in a 900x700dp window that can be dragged
+  down to 320x360dp, and follows the window live as it is resized, maximized or snapped. With a
+  keyboard, Enter sends and Shift+Enter adds a line (Ctrl+Enter still sends; a phone's return key
+  is untouched), Esc closes a sheet, dialog or the full-screen editor, Tab and Shift+Tab move
+  through the controls with a visible focus ring, and arrow keys and Enter walk the session list.
+  Ctrl+N starts a session, Ctrl+F searches them, Ctrl+K or Ctrl+/ jumps to the message box, Ctrl+B
+  shows or hides the list and Ctrl+, opens settings; all of them are listed in the system's shortcut
+  panel (Search+/ on a Chromebook). With a mouse or trackpad, clickable things show the hand cursor,
+  icon-only buttons name themselves when pointed at, right click opens what a long press opens, and
+  the wheel scrolls the attachment strip sideways. Files and images dragged in from the Files app
+  or another window attach to the message, dropped text lands in the draft, and Ctrl+V pastes a
+  copied image or file as an attachment. See docs/ADAPTIVE.md.
+
+  <img src="docs/images/releases/0.21.0/devices/chromebook-window.png" alt="The app in a resizable Chromebook window with the list, the chat and Details" width="340">
+  <img src="docs/images/releases/0.21.0/devices/chromebook-drag-drop.png" alt="A file being dragged from the Files app onto the message box, with a drop hint showing" width="340">
+
 ### Fixed
+
+- **The usage card shows real numbers on every provider.** The card in the session details said "No
+  quota data" for everything except a DeepSeek account: it asked the harness for subscription limits
+  that no harness serves, and only for five hard-coded providers, so OpenCode and the rest never got
+  an answer. It now starts with the session's own usage on any provider: the model, input and output
+  tokens, the cache hit rate and the total, as short counts such as 12.4k in the reader's own digits.
+  A signed-in DeepSeek account shows its balance whichever provider the session runs on, with bonus
+  credit on its own line, exact for values like `0E-16`, and a short "Couldn't load the balance" when
+  the lookup fails; signed out, the row is simply not there. When a provider turns a request away for
+  quota or rate limit, the card and the composer footer say so, and the line clears as soon as a
+  request goes through. The subscription-limit bars are asked for once per connection: a harness
+  without them is remembered and left alone, and the bars appear by themselves if one ever serves
+  them. The token totals that sat in the Context card moved into this one.
+
+  <img src="docs/images/releases/0.21.0/devices/usage-card-phone.png" alt="The usage card in the session details, with session tokens and a DeepSeek balance" width="260">
 
 - **Permission presets read in the app's language.** The permission sheet, the composer's permission
   chip and the session details panel showed Read Only, Workspace Write, Full access and Auto review
@@ -31,6 +466,25 @@ All notable changes to DSH Mobile are documented here. Format based on
   no descriptions. The four shipped presets are recognised by id again — and `ptc` beside the older
   `code` id — while a preset marked as authored, and any id the app does not ship, keeps its own
   name.
+
+- **No more grey pill between the permission chip and send.** Once a session had reported any
+  context usage at all, the composer drew a small empty bar there, even at 0%, and it took enough
+  room to cut the permission chip down to "Works…" on a Flip's inner screen. The bar now appears
+  only once the window is filling up enough for it to show anything, it takes only the room the chip
+  leaves (the chip keeps its whole name), and a screen reader hears what it says ("62% of context
+  used"). The Details panel still shows the exact figure and the breakdown at any usage.
+
+### Changed
+
+- **Your own actions in the chat are quiet grey lines instead of terminal rows.** Things you do that
+  are not chat messages, such as changing the permission, turning plan mode on or off, compacting
+  the conversation or running any other slash command, used to appear as terminal rows, as if the AI
+  had run them, and they folded into its process. They now show as small centred grey lines: "You
+  changed permission to Read Only", "You turned plan mode on", "You compacted the conversation",
+  "You ran /foo", or a note that it did not go through. What the AI itself does looks the same as
+  before.
+
+  <img src="docs/images/releases/0.21.0/devices/system-lines-phone.png" alt="Two permission changes shown as small grey lines in the chat" width="260">
 
 ## [0.20.0] - 2026-11-09
 

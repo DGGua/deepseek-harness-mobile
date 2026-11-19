@@ -27,6 +27,19 @@ interface SessionStoreEntryPoint {
     fun hostsStore(): HostsStore
     fun connectionManager(): ConnectionManager
     fun harnessSessionStore(): HarnessSessionStore
+    fun reasoningTranslations(): com.labteto.dshmobile.translation.ReasoningTranslations
+}
+
+/**
+ * Resolves the process-wide reasoning translation engine once per composition. One engine serves the
+ * transcript, the subagent sheet and Settings, so they share its cache and its request limit.
+ */
+@Composable
+internal fun rememberReasoningTranslationEngine(): com.labteto.dshmobile.translation.ReasoningTranslationEngine {
+    val context = LocalContext.current.applicationContext
+    return remember {
+        EntryPointAccessors.fromApplication(context, SessionStoreEntryPoint::class.java).reasoningTranslations().engine
+    }
 }
 
 /** Resolves the process-scoped [SessionStore] once per composition. */

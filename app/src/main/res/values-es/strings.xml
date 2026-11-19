@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">Ordenar por última actualización</string>
     <string name="chatlist_sort_manual">Orden manual</string>
     <string name="chat_composer_hint">Envía un mensaje al agente…</string>
+    <string name="chat_composer_expand">Abrir el editor a pantalla completa</string>
+    <string name="chat_composer_fullscreen_title">Mensaje</string>
     <string name="chat_composer_queue">Cola</string>
     <string name="chat_composer_steer">Dirigir</string>
     <string name="chat_composer_stop">Detener</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">Selecciona una fila de herramienta en el chat para inspeccionar su entrada y salida.</string>
     <string name="chat_input_placeholder">Entrada</string>
     <string name="chat_output_placeholder">Salida</string>
+    <string name="tool_output_show_raw">Ver JSON sin formato</string>
+    <string name="tool_output_hide_raw">Ocultar JSON sin formato</string>
+    <string name="tool_output_copy_raw">Copiar JSON sin formato</string>
     <string name="goal_title">Objetivo</string>
     <string name="goal_none">Sin objetivo activo</string>
     <string name="goal_phase_active">Activo</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">Mantiene visible el mensaje más reciente mientras llega la respuesta. Desplázate hacia arriba para leer a tu ritmo. El seguimiento se reanuda al volver abajo.</string>
     <string name="settings_default_delivery_mode">Modo de envío predeterminado</string>
     <string name="settings_default_delivery_mode_hint">Se usa al enviar mientras hay un turno en curso. Aún puedes elegir otro modo para cada mensaje.</string>
+    <string name="settings_work_steps">Pasos de trabajo</string>
+    <string name="settings_work_steps_hint">Solo cambia cómo se ve el chat, y solo en este dispositivo. Toca una fila para abrir o cerrar solo esa.</string>
+    <string name="settings_auto_translate_reasoning">Traducir el proceso de pensamiento automáticamente</string>
+    <string name="settings_auto_translate_reasoning_hint">Traduce el proceso de pensamiento cuando lo abres, con el mismo proveedor e idioma que el botón Traducir. Cada traducción envía el texto a ese proveedor. Un proveedor de modelo gasta tus tokens; Bing y Google no.</string>
+    <string name="settings_auto_translate_reasoning_unavailable">Este harness no tiene traducción configurada, así que el interruptor no hace nada aquí. Activa el complemento de traducción y elige un proveedor en el harness.</string>
+    <string name="settings_auto_translate_reasoning_no_host">Conéctate a un harness para ver si puede traducir.</string>
+    <string name="reasoning_translation_failed">No se pudo traducir. El original sigue aquí.</string>
+    <string name="work_steps_compact">Compacto</string>
+    <string name="work_steps_compact_hint">El trabajo terminado se pliega en una fila. Las llamadas a herramientas quedan en un grupo cerrado.</string>
+    <string name="work_steps_standard">Estándar</string>
+    <string name="work_steps_standard_hint">Como Compacto, y un grupo en curso muestra el paso actual. El razonamiento muestra su primera línea.</string>
+    <string name="work_steps_detailed">Detallado</string>
+    <string name="work_steps_detailed_hint">Como Estándar, pero las llamadas a herramientas del turno en curso se ven una por una.</string>
+    <string name="work_steps_verbose">Todo desplegado</string>
+    <string name="work_steps_verbose_hint">No se pliega ni se agrupa nada. Las llamadas a herramientas se abren solas y muestran el inicio de las salidas largas.</string>
+    <string name="work_steps_clipped">Se muestra el inicio de un resultado largo.</string>
+    <string name="work_steps_show_all">Mostrar todo</string>
     <string name="settings_plugins">Complementos</string>
     <string name="settings_plugins_inventory">Inventario de complementos</string>
     <string name="settings_language">Idioma</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d m</string>
     <string name="time_years">%1$d a</string>
     <string name="chatlist_open">Abrir chats</string>
+    <string name="chatlist_hide">Ocultar chats</string>
+    <string name="chatlist_show">Mostrar chats</string>
     <string name="chatlist_workspace_rename">Renombrar proyecto</string>
     <string name="chatlist_workspace_delete">Quitar proyecto</string>
     <string name="chatlist_workspace_delete_confirm">¿Quitar este proyecto del harness? Su carpeta y los registros de sus sesiones se quedan como están.</string>
@@ -297,7 +321,7 @@
     <string name="update_open">Ver la versión</string>
     <string name="update_later">Más tarde</string>
     <string name="settings_update_check">Buscar actualizaciones</string>
-    <string name="settings_update_check_hint">Consulta en GitHub la última versión al iniciar la app y de nuevo cuando vuelves a ella pasadas unas horas.</string>
+    <string name="settings_update_check_hint">Consulta en GitHub si hay una app más nueva, y un harness más nuevo si hay uno configurado en este teléfono. Al iniciar la app y de nuevo cuando vuelves a ella pasadas unas horas.</string>
     <string name="connect_mode_lan">Red local</string>
     <string name="connect_mode_relay">Relay</string>
     <string name="pair_title">Emparejar un relay</string>
@@ -356,13 +380,15 @@
     <string name="jobs_stopping">Deteniendo</string>
     <string name="jobs_output_empty">Aún no hay salida</string>
     <string name="jobs_output_dropped">Se descartó la salida anterior</string>
-    <string name="archive_busy_title">Aún en ejecución</string>
-    <string name="archive_busy_body">Esta sesión todavía tiene trabajo en ejecución: %1$s. Si la archivas, ese trabajo se detendrá antes.</string>
+    <string name="archive_busy_title">¿Detener y archivar esta sesión?</string>
+    <string name="archive_busy_body">Esta sesión todavía tiene trabajo en ejecución. Al archivarla, ese trabajo se detiene primero.</string>
     <string name="archive_busy_confirm">Detener y archivar</string>
-    <string name="archive_activity_turn">el turno actual</string>
-    <string name="archive_activity_subagent">subagentes</string>
-    <string name="archive_activity_job">trabajos en segundo plano</string>
-    <string name="archive_activity_schedule">programaciones</string>
+    <string name="archive_busy_after">El trabajo detenido no continuará solo. Puedes encontrar la sesión en Sesiones archivadas y retomarla desde ahí.</string>
+    <string name="archive_activity_more">y %1$d más</string>
+    <string name="archive_activity_turn">Turno actual</string>
+    <string name="archive_activity_subagent">Subagentes</string>
+    <string name="archive_activity_job">Trabajos en segundo plano</string>
+    <string name="archive_activity_schedule">Programaciones</string>
     <string name="chatlist_pinned">Fijadas</string>
     <string name="chatlist_session_pin">Fijar sesión</string>
     <string name="chatlist_session_unpin">Desfijar sesión</string>
@@ -421,6 +447,15 @@
     <string name="harness_automation_history_not_found">Esta tarea ya no está disponible.</string>
     <string name="harness_automation_history_cursor_error">Los registros han cambiado. Inténtalo de nuevo.</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">Cambiaste el permiso a %1$s</string>
+    <string name="system_line_permission_changed_plain">Cambiaste el permiso</string>
+    <string name="system_line_permission_failed">El cambio de permiso no se aplicó</string>
+    <string name="system_line_compact">Compactaste la conversación</string>
+    <string name="system_line_plan_on">Activaste el modo plan</string>
+    <string name="system_line_plan_off">Desactivaste el modo plan</string>
+    <string name="system_line_command">Ejecutaste %1$s</string>
+    <string name="system_line_command_failed">%1$s no se pudo ejecutar</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">Rebobinado hasta aquí</string>
     <string name="rewind_no_text">(sin texto)</string>
@@ -516,10 +551,9 @@
     <string name="hold_replace_draft_confirm">Reemplazar</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">Límites y saldo</string>
+    <string name="quota_title">Uso</string>
     <string name="quota_short">5 h</string>
     <string name="quota_week">Semana</string>
-    <string name="quota_unknown">Sin datos de límites</string>
     <string name="quota_refresh">Volver a comprobar</string>
     <string name="quota_checked">Comprobado: %1$s</string>
     <string name="quota_all">Todos los proveedores</string>
@@ -535,11 +569,43 @@
     <string name="quota_compact_minute">min</string>
     <string name="quota_other">Otro límite</string>
     <string name="quota_remaining_percent">Restante: %1$s</string>
+    <string name="quota_session_title">Esta sesión</string>
+    <string name="quota_tokens_input">Entrada</string>
+    <string name="quota_tokens_output">Salida</string>
+    <string name="quota_tokens_cache">Aciertos de caché</string>
+    <string name="quota_tokens_total">Total</string>
+    <string name="quota_session_empty">Aún no se han usado tokens</string>
+    <string name="quota_balance_title">Saldo de DeepSeek</string>
+    <string name="quota_balance_bonus">Bono: %1$s</string>
+    <string name="quota_balance_failed">No se pudo cargar el saldo</string>
+    <string name="quota_limit_reached">Límite de uso alcanzado</string>
+    <string name="quota_rate_limited">Demasiadas solicitudes, inténtalo de nuevo en un momento</string>
+    <string name="quota_limit_short">Límite alcanzado</string>
+    <string name="quota_rate_short">Límite de solicitudes</string>
     <string name="permission_preset_read_only">Sólo lectura</string>
     <string name="permission_preset_workspace_write">Escritura en el espacio de trabajo</string>
     <string name="permission_preset_full_access">Acceso completo</string>
     <string name="permission_preset_auto">Revisión automática</string>
     <string name="permission_preset_auto_desc">Ejecuta sin zona de pruebas tras una revisión experimental del mismo modelo de cada llamada de herramienta nativa y llamada interna PTC.</string>
+    <string name="shortcuts_group_message">Cuadro de mensaje</string>
+    <string name="shortcuts_group_sessions">Sesiones</string>
+    <string name="shortcuts_group_general">General</string>
+    <string name="shortcuts_send">Enviar mensaje</string>
+    <string name="shortcuts_newline">Nueva línea</string>
+    <string name="shortcuts_focus_composer">Ir al cuadro de mensaje</string>
+    <string name="shortcuts_new_session">Nueva sesión</string>
+    <string name="shortcuts_search_sessions">Buscar sesiones</string>
+    <string name="shortcuts_toggle_list">Mostrar u ocultar sesiones</string>
+    <string name="shortcuts_settings">Abrir ajustes</string>
+    <string name="shortcuts_close">Cerrar hoja o diálogo</string>
+    <string name="chat_drop_hint">Suelta los archivos aquí para adjuntarlos</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">Preparando el harness en este teléfono</string>
+    <string name="runtime_notif_downloading">Descargando, %1$d%% listo</string>
+    <string name="runtime_notif_unpacking">Descomprimiendo archivos</string>
+    <string name="runtime_notif_starting">Iniciando el harness en este teléfono</string>
+    <string name="runtime_notif_running">Harness en marcha en este teléfono</string>
+    <string name="runtime_notif_running_text">Escuchando en el puerto %1$d</string>
     <string name="hostswitcher_title">Servidores</string>
     <string name="hostswitcher_empty">No hay otros servidores recordados. Conéctate a uno desde la pantalla de conexión para añadirlo aquí.</string>
     <string name="hostswitcher_current">Actual</string>

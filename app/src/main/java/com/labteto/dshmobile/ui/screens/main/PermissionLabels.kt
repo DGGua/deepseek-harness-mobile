@@ -1,10 +1,12 @@
 package com.labteto.dshmobile.ui.screens.main
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import com.labteto.dshmobile.R
 import com.labteto.dshmobile.core.wire.dto.CUSTOM_PRESET
 import com.labteto.dshmobile.core.wire.dto.FULL_ACCESS_PRESET
+import com.labteto.dshmobile.ui.theme.DsColors
 
 /**
  * Localized permission-preset labels.
@@ -25,6 +27,9 @@ internal enum class ShippedPermissionPreset {
     WorkspaceWrite,
     FullAccess,
     AutoReview,
+
+    /** The built-in runtime's own preset on Android (`ask-commands`, "Ask before commands"). */
+    AskCommands,
 }
 
 /** The English label the harness ships for each shipped preset (its default `name`). */
@@ -32,6 +37,7 @@ private val SHIPPED_DEFAULT_NAMES = mapOf(
     ShippedPermissionPreset.ReadOnly to "Read Only",
     ShippedPermissionPreset.WorkspaceWrite to "Workspace Write",
     ShippedPermissionPreset.FullAccess to "Full access",
+    ShippedPermissionPreset.AskCommands to "Ask before commands",
 )
 
 /**
@@ -46,6 +52,7 @@ internal fun shippedPermissionPreset(value: String, name: String?): ShippedPermi
     "read-only", "read", "readonly" -> shippedOrNull(name, value, ShippedPermissionPreset.ReadOnly)
     "workspace-write", "workspace", "write" -> shippedOrNull(name, value, ShippedPermissionPreset.WorkspaceWrite)
     FULL_ACCESS_PRESET -> shippedOrNull(name, value, ShippedPermissionPreset.FullAccess)
+    ASK_COMMANDS_PRESET -> shippedOrNull(name, value, ShippedPermissionPreset.AskCommands)
     "auto" -> ShippedPermissionPreset.AutoReview
     else -> null
 }
@@ -58,16 +65,38 @@ private fun shippedOrNull(name: String?, id: String, shipped: ShippedPermissionP
  * harness's humanised wire label otherwise, and the shared "Custom" copy for the derived state.
  */
 @Composable
-internal fun permissionPresetLabel(value: String, name: String?): String = when (shippedPermissionPreset(value, name)) {
-    ShippedPermissionPreset.ReadOnly -> stringResource(R.string.permission_preset_read_only)
-    ShippedPermissionPreset.WorkspaceWrite -> stringResource(R.string.permission_preset_workspace_write)
-    ShippedPermissionPreset.FullAccess -> stringResource(R.string.permission_preset_full_access)
-    ShippedPermissionPreset.AutoReview -> stringResource(R.string.permission_preset_auto)
-    null -> when {
+internal fun permissionPresetLabel(value: String, name: String?): String {
+    val own = permissionPresetLabelRes(value, name)
+    return when {
+        own != null -> stringResource(own)
         value == CUSTOM_PRESET -> stringResource(R.string.permission_custom)
         else -> humanisedPresetLabel(value, name)
     }
 }
+
+/** The app's own label for a shipped preset, or null when the harness's name is kept. */
+internal fun permissionPresetLabelRes(value: String, name: String?): Int? = when (shippedPermissionPreset(value, name)) {
+    ShippedPermissionPreset.ReadOnly -> R.string.permission_preset_read_only
+    ShippedPermissionPreset.WorkspaceWrite -> R.string.permission_preset_workspace_write
+    ShippedPermissionPreset.FullAccess -> R.string.permission_preset_full_access
+    ShippedPermissionPreset.AutoReview -> R.string.permission_preset_auto
+    ShippedPermissionPreset.AskCommands -> R.string.permission_preset_ask_commands
+    null -> null
+}
+
+/**
+ * The app's own one-line description, for the two presets whose wording the app owns on every
+ * harness: Full access (the same on a desktop harness and on the phone) and the built-in runtime's
+ * Ask before commands. Null for the rest, which keep the harness's own description.
+ */
+internal fun permissionPresetDescriptionRes(value: String, name: String?): Int? = when (shippedPermissionPreset(value, name)) {
+    ShippedPermissionPreset.FullAccess -> R.string.permission_preset_full_access_desc
+    ShippedPermissionPreset.AskCommands -> R.string.permission_preset_ask_commands_desc
+    else -> null
+}
+
+/** The built-in runtime's "Ask before commands" preset id (README "Shell commands and permissions on Android"). */
+internal const val ASK_COMMANDS_PRESET = "ask-commands"
 
 /**
  * The wire label, humanised the way the desktop client does: `workspace-write` ->
@@ -85,3 +114,22 @@ private fun titleCasePresetId(name: String): String = name
     .split('-', '_')
     .filter { it.isNotEmpty() }
     .joinToString(" ") { part -> part.replaceFirstChar { it.uppercaseChar() } }
+
+/**
+ * The shield's colour where the preset name has no room — the full-screen page's icon-only bar.
+ *
+ * There the colour is the whole message, so each shipped preset gets its own reading: read-only is
+ * muted because nothing can change, the working preset takes the accent, full access the warning
+ * amber it already had, and auto-review the green of "nobody has to watch this". A deployment's own
+ * preset stays neutral on purpose: a colour would be the app claiming to know what it does, and it
+ * cannot.
+ */
+internal fun permissionPresetTint(value: String, name: String?, colors: DsColors): Color =
+    when (shippedPermissionPreset(value, name)) {
+        ShippedPermissionPreset.ReadOnly -> colors.labelSecondary
+        ShippedPermissionPreset.WorkspaceWrite -> colors.accent
+        ShippedPermissionPreset.FullAccess -> colors.warnLabel
+        ShippedPermissionPreset.AutoReview -> colors.success
+        ShippedPermissionPreset.AskCommands -> colors.accent
+        null -> colors.labelPrimary
+    }

@@ -45,9 +45,6 @@ import com.labteto.dshmobile.data.ActionOutcome
 import com.labteto.dshmobile.data.SessionStore
 import com.labteto.dshmobile.data.failureNotice
 import com.labteto.dshmobile.ui.components.DsBottomSheet
-import com.labteto.dshmobile.ui.components.DsButton
-import com.labteto.dshmobile.ui.components.DsButtonSize
-import com.labteto.dshmobile.ui.components.DsButtonVariant
 import com.labteto.dshmobile.ui.components.DsSegment
 import com.labteto.dshmobile.ui.components.DsSegmented
 import com.labteto.dshmobile.ui.components.rememberDsHaptics
@@ -100,24 +97,17 @@ internal fun ModelsSheet(
             haptics.tap()
             onDismiss()
         },
-        trailing = {
-            DsButton(
-                text = stringResource(R.string.common_done),
-                onClick = {
-                    haptics.tap()
-                    onDismiss()
-                },
-                variant = DsButtonVariant.Ghost,
-                size = DsButtonSize.Small,
-            )
-        },
     ) {
         if (models == null) {
             Text(stringResource(R.string.common_loading), style = DsType.std14, color = colors.labelTertiary)
             return@DsBottomSheet
         }
         if (models.groups.sumOf { it.models.size } > 4) DsSearchField(query, { query = it }, stringResource(R.string.common_search))
-        if (models.groups.none { group -> group.models.any { modelSearchMatches(query, "${group.id} ${group.name} ${it.id} ${it.name}") } }) {
+        // Nothing to pick at all: say why and lead to the keys, instead of an empty list. The
+        // picker closes first, so the Models screen opens over the chat rather than under a sheet.
+        if (models.groups.none { it.models.isNotEmpty() }) {
+            com.labteto.dshmobile.ui.screens.models.ModelsPickerEntry(onOpened = onDismiss)
+        } else if (models.groups.none { group -> group.models.any { modelSearchMatches(query, "${group.id} ${group.name} ${it.id} ${it.name}") } }) {
             Text(stringResource(R.string.ux_b_no_models), style = DsType.small13, color = colors.labelSecondary)
         }
         val current = models.current

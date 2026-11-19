@@ -17,6 +17,8 @@ data class AppSettings(
      * behaviour the permission exists to prevent.
      */
     val autoStartLoopbackHarness: Boolean = false,
+    /** In "this phone" mode, start the built-in harness when the app opens and finds it stopped. Off by default. */
+    val autoStartBuiltInHarness: Boolean = false,
     /** Relay mode's counterpart to [autoConnectLan]: connect to a paired relay that mDNS finds. */
     val autoConnectRelay: Boolean = false,
     val keepConnectedInBackground: Boolean = false,
@@ -67,6 +69,12 @@ data class AppSettings(
      * rather it stayed local-only.
      */
     val updateCheckEnabled: Boolean = true,
+    /**
+     * Whether a new release is announced with a notification when the app is not open. Off by
+     * default: it makes the update check run in the background too, once a day, which is a request
+     * the app would otherwise only make while someone is looking at it.
+     */
+    val updateNotifyEnabled: Boolean = false,
     /** A release the user has already declined, so it is offered once rather than every launch. */
     val dismissedUpdate: String? = null,
     /**
@@ -79,4 +87,16 @@ data class AppSettings(
     val followStreamingReply: Boolean = true,
     /** Default delivery for prompts sent while a turn is running: `queue` or `steer`. */
     val defaultDeliveryMode: String = "queue",
+    /**
+     * How much tool-call detail the transcript shows by default: a [WorkStepDisplay] key
+     * (`compact|standard|detailed|verbose`). Per device; the host's settings are not involved.
+     * Read it through [WorkStepDisplay.of], which turns anything unknown into the default.
+     */
+    val workStepDisplay: String = DEFAULT_WORK_STEP_DISPLAY.key,
+    /**
+     * Whether an open reasoning block is translated on its own, with the provider and language the
+     * manual Translate button uses. Off by default: each translation is a request on the reader's own
+     * provider. Per device.
+     */
+    val autoTranslateReasoning: Boolean = false,
 )

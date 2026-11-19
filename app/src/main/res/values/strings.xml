@@ -55,6 +55,8 @@
     <string name="chatlist_sort_updated">Sort by last update</string>
     <string name="chatlist_sort_manual">Manual order</string>
     <string name="chatlist_open">Open chats</string>
+    <string name="chatlist_hide">Hide chats</string>
+    <string name="chatlist_show">Show chats</string>
     <string name="hostswitcher_title">Backends</string>
     <string name="hostswitcher_empty">No other remembered backends. Connect one from the connect screen to add it here.</string>
     <string name="hostswitcher_current">Current</string>
@@ -74,6 +76,8 @@
     <string name="chatlist_needs_action">Needs you</string>
     <string name="chatlist_sort_title">Order</string>
     <string name="chat_composer_hint">Message the agent</string>
+    <string name="chat_composer_expand">Open the full screen editor</string>
+    <string name="chat_composer_fullscreen_title">Message</string>
     <string name="chat_composer_send">Send message</string>
     <string name="chat_composer_commands">Commands</string>
     <string name="chat_composer_mode">Send mode</string>
@@ -130,6 +134,9 @@
     <string name="chat_details_empty">Tap a tool call in the chat to see its input and output.</string>
     <string name="chat_input_placeholder">Input</string>
     <string name="chat_output_placeholder">Output</string>
+    <string name="tool_output_show_raw">Show raw JSON</string>
+    <string name="tool_output_hide_raw">Hide raw JSON</string>
+    <string name="tool_output_copy_raw">Copy raw JSON</string>
     <string name="goal_title">Goal</string>
     <string name="goal_none">No active goal</string>
     <string name="goal_phase_active">Active</string>
@@ -216,6 +223,23 @@
     <string name="settings_follow_streaming_hint">Keeps the newest message in view while a reply is written. Scroll up to read at your own pace. Following starts again when you return to the bottom.</string>
     <string name="settings_default_delivery_mode">Default send mode</string>
     <string name="settings_default_delivery_mode_hint">Used when sending while a turn is running. You can still choose a different mode for each message.</string>
+    <string name="settings_work_steps">Work steps</string>
+    <string name="settings_work_steps_hint">Only changes how the chat looks, and only on this device. Tap a row to open or close just that one.</string>
+    <string name="settings_auto_translate_reasoning">Auto-translate thought process</string>
+    <string name="settings_auto_translate_reasoning_hint">Translates a thought process when you open it, with the same provider and language as the Translate button. Each translation sends the text to that provider. A model provider uses your tokens; Bing and Google do not.</string>
+    <string name="settings_auto_translate_reasoning_unavailable">This harness has no translation set up, so the switch does nothing here. Turn on the translator plugin and pick a provider on the harness.</string>
+    <string name="settings_auto_translate_reasoning_no_host">Connect to a harness to see if it can translate.</string>
+    <string name="reasoning_translation_failed">Couldn\'t translate this. The original is still here.</string>
+    <string name="work_steps_compact">Compact</string>
+    <string name="work_steps_compact_hint">Finished work folds into one row. Tool calls stay in a closed group.</string>
+    <string name="work_steps_standard">Standard</string>
+    <string name="work_steps_standard_hint">Like Compact, and a running group shows the step it is on. Thinking shows its first line.</string>
+    <string name="work_steps_detailed">Detailed</string>
+    <string name="work_steps_detailed_hint">Like Standard, but the tool calls of the turn that is running show one by one.</string>
+    <string name="work_steps_verbose">Fully expanded</string>
+    <string name="work_steps_verbose_hint">Nothing is folded or grouped. Tool calls open on their own and show the start of long output.</string>
+    <string name="work_steps_clipped">Showing the start of a long result.</string>
+    <string name="work_steps_show_all">Show all</string>
     <string name="settings_plugins">Plugins</string>
     <string name="settings_plugins_inventory">Plugin inventory</string>
     <string name="settings_language">Language</string>
@@ -311,7 +335,7 @@
     <string name="update_open">View release</string>
     <string name="update_later">Later</string>
     <string name="settings_update_check">Check for updates</string>
-    <string name="settings_update_check_hint">Asks GitHub for the latest release when the app starts, and again when you come back to it after a few hours.</string>
+    <string name="settings_update_check_hint">Asks GitHub for a newer app, and for a newer harness if one is set up on this phone. When the app starts, and again when you come back to it after a few hours.</string>
     <!-- Relay: choosing how to connect, pairing, and the failures that need a different fix. -->
     <string name="connect_mode_lan">Local network</string>
     <string name="connect_mode_relay">Relay</string>
@@ -376,13 +400,15 @@
     <string name="jobs_stopping">Stopping</string>
     <string name="jobs_output_empty">No output yet</string>
     <string name="jobs_output_dropped">Earlier output was dropped</string>
-    <string name="archive_busy_title">Still running</string>
-    <string name="archive_busy_body">This session still has work running: %1$s. Archiving stops that work first.</string>
+    <string name="archive_busy_title">Stop and archive this session?</string>
+    <string name="archive_busy_body">This session still has work running. Archiving stops it first.</string>
     <string name="archive_busy_confirm">Stop and archive</string>
-    <string name="archive_activity_turn">the current turn</string>
-    <string name="archive_activity_subagent">subagents</string>
-    <string name="archive_activity_job">background jobs</string>
-    <string name="archive_activity_schedule">schedules</string>
+    <string name="archive_busy_after">Stopped work will not carry on by itself. You can find the session under Archived sessions and resume it there.</string>
+    <string name="archive_activity_more">and %1$d more</string>
+    <string name="archive_activity_turn">Current turn</string>
+    <string name="archive_activity_subagent">Subagents</string>
+    <string name="archive_activity_job">Background jobs</string>
+    <string name="archive_activity_schedule">Schedules</string>
     <string name="chatlist_pinned">Pinned</string>
     <string name="chatlist_session_pin">Pin session</string>
     <string name="chatlist_session_unpin">Unpin session</string>
@@ -442,6 +468,15 @@
     <string name="harness_automation_history_not_found">This task is no longer available.</string>
     <string name="harness_automation_history_cursor_error">The records changed. Try again.</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">You changed permission to %1$s</string>
+    <string name="system_line_permission_changed_plain">You changed the permission</string>
+    <string name="system_line_permission_failed">The permission change didn\'t go through</string>
+    <string name="system_line_compact">You compacted the conversation</string>
+    <string name="system_line_plan_on">You turned plan mode on</string>
+    <string name="system_line_plan_off">You turned plan mode off</string>
+    <string name="system_line_command">You ran %1$s</string>
+    <string name="system_line_command_failed">%1$s didn\'t go through</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">Rewound to here</string>
     <string name="rewind_no_text">(no text)</string>
@@ -537,10 +572,9 @@
     <string name="hold_replace_draft_confirm">Replace</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">Limits and balance</string>
+    <string name="quota_title">Usage</string>
     <string name="quota_short">5h</string>
     <string name="quota_week">Week</string>
-    <string name="quota_unknown">No quota data</string>
     <string name="quota_refresh">Recheck</string>
     <string name="quota_checked">Checked: %1$s</string>
     <string name="quota_all">All providers</string>
@@ -556,9 +590,41 @@
     <string name="quota_compact_minute">m</string>
     <string name="quota_other">Other limit</string>
     <string name="quota_remaining_percent">%1$s remaining</string>
+    <string name="quota_session_title">This session</string>
+    <string name="quota_tokens_input">Input</string>
+    <string name="quota_tokens_output">Output</string>
+    <string name="quota_tokens_cache">Cache hits</string>
+    <string name="quota_tokens_total">Total</string>
+    <string name="quota_session_empty">No tokens used yet</string>
+    <string name="quota_balance_title">DeepSeek balance</string>
+    <string name="quota_balance_bonus">Bonus: %1$s</string>
+    <string name="quota_balance_failed">Couldn\'t load the balance</string>
+    <string name="quota_limit_reached">Usage limit reached</string>
+    <string name="quota_rate_limited">Rate limited, try again shortly</string>
+    <string name="quota_limit_short">Limit reached</string>
+    <string name="quota_rate_short">Rate limited</string>
     <string name="permission_preset_read_only">Read Only</string>
     <string name="permission_preset_workspace_write">Workspace Write</string>
     <string name="permission_preset_full_access">Full access</string>
     <string name="permission_preset_auto">Auto review</string>
     <string name="permission_preset_auto_desc">Run without a sandbox after an experimental same-model review of every native tool call and PTC inner call.</string>
+    <string name="shortcuts_group_message">Message box</string>
+    <string name="shortcuts_group_sessions">Sessions</string>
+    <string name="shortcuts_group_general">General</string>
+    <string name="shortcuts_send">Send message</string>
+    <string name="shortcuts_newline">New line</string>
+    <string name="shortcuts_focus_composer">Go to the message box</string>
+    <string name="shortcuts_new_session">New session</string>
+    <string name="shortcuts_search_sessions">Search sessions</string>
+    <string name="shortcuts_toggle_list">Show or hide sessions</string>
+    <string name="shortcuts_settings">Open settings</string>
+    <string name="shortcuts_close">Close a sheet or dialog</string>
+    <string name="chat_drop_hint">Drop files here to attach them</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">Setting up the harness on this phone</string>
+    <string name="runtime_notif_downloading">Downloading, %1$d%% done</string>
+    <string name="runtime_notif_unpacking">Unpacking files</string>
+    <string name="runtime_notif_starting">Starting the harness on this phone</string>
+    <string name="runtime_notif_running">Harness running on this phone</string>
+    <string name="runtime_notif_running_text">Listening on port %1$d</string>
 </resources>

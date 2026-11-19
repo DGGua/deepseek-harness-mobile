@@ -1,12 +1,11 @@
 package com.labteto.dshmobile.ui.screens.main
 
-import androidx.compose.foundation.clickable
+import com.labteto.dshmobile.ui.components.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -111,16 +110,6 @@ internal fun ReferencePicker(store: SessionStore, composer: ComposerDraft, initi
         onDismiss = {
             haptics.tap()
             onClose()
-        },
-        trailing = {
-            DsIconButton(
-                Icons.Filled.Close,
-                stringResource(R.string.common_close),
-                {
-                    haptics.tap()
-                    onClose()
-                },
-            )
         },
     ) {
         DsSearchField(query, ::replaceQuery, stringResource(R.string.common_search))

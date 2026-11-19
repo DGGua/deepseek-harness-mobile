@@ -3,7 +3,10 @@ package com.labteto.dshmobile.ui.screens.main
 import com.labteto.dshmobile.core.session.AssistantMessageNode
 import com.labteto.dshmobile.core.session.ChatBlock
 import com.labteto.dshmobile.core.session.CommandNode
+import com.labteto.dshmobile.core.session.CompactionNode
+import com.labteto.dshmobile.core.session.EventFold
 import com.labteto.dshmobile.core.session.OtherNode
+import com.labteto.dshmobile.core.session.SessionEventEnvelope
 import com.labteto.dshmobile.core.session.ToolCallNode
 import com.labteto.dshmobile.core.session.ToolResultNode
 import com.labteto.dshmobile.core.session.TurnEndNode
@@ -11,8 +14,12 @@ import com.labteto.dshmobile.core.session.TurnStartNode
 import com.labteto.dshmobile.core.session.UserMessageNode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -92,6 +99,57 @@ class ChatNodeVisibilityTest {
         assertFalse(OtherNode(seq = 4, type = "step/start", data = JsonNull).rendersContent())
         assertFalse(OtherNode(seq = 5, type = "assistant/chunk", data = JsonNull).rendersContent())
         assertTrue(OtherNode(seq = 6, type = "something/new", data = JsonNull).rendersContent())
+    }
+
+    // Issue #96: `plugin:translator/request` and `/result` showed up as raw rows after a reasoning
+    // translation. The harness writes every plugin record `ignorable`, which means a reader that
+    // does not know the type may skip it.
+    @Test
+    fun `harness plugin records are not transcript rows`() {
+        val request = OtherNode(seq = 4, type = "plugin:translator/request", data = JsonNull, ignorable = true)
+        val result = OtherNode(seq = 5, type = "plugin:translator/result", data = JsonNull, ignorable = true)
+        assertFalse(request.rendersContent())
+        assertFalse(result.rendersContent())
+
+        val reply = AssistantMessageNode(
+            seq = 6, messageId = "a", turn = 1, step = 1, blocks = listOf(ChatBlock("text", "done")),
+        )
+        assertEquals(listOf(reply), renderableChatNodes(listOf(request, result, reply), running = false))
+    }
+
+    @Test
+    fun `an unknown event the harness did not mark skippable still renders`() {
+        // Required-but-unrecognised events stay on screen: that is the compatibility contract.
+        assertTrue(OtherNode(seq = 4, type = "something/new", data = JsonNull).rendersContent())
+        assertTrue(OtherNode(seq = 5, type = "something/new", data = JsonNull, ignorable = false).rendersContent())
+        // The plugin namespace alone is not the signal; the harness's marker is.
+        assertTrue(OtherNode(seq = 6, type = "plugin:translator/request", data = JsonNull).rendersContent())
+    }
+
+    @Test
+    fun `a marker cannot hide a type this build draws`() {
+        assertTrue(OtherNode(seq = 4, type = "workspace/changes", data = JsonNull, ignorable = true).rendersContent())
+        assertTrue(OtherNode(seq = 5, type = "deliverables/presented", data = JsonNull, ignorable = true).rendersContent())
+    }
+
+    @Test
+    fun `a skipped plugin record stays in the journal and in the folded nodes Trajectory reads`() {
+        val events = listOf(
+            SessionEventEnvelope("turn/start", 0, 0, buildJsonObject { put("turn", 1) }),
+            SessionEventEnvelope("plugin:translator/request", 1, 1, buildJsonObject { put("provider", "deepseek-account") }, ignorable = true),
+            SessionEventEnvelope("plugin:translator/result", 2, 2, buildJsonObject { put("requestSeq", 1) }, ignorable = true),
+        )
+        val snapshot = EventFold("s1").fold(events)
+
+        // Chat draws nothing for them...
+        assertTrue(renderableChatNodes(snapshot.nodes, running = false).isEmpty())
+        // ...while Trajectory, which re-folds the journal and lists every event raw, still has both.
+        val refolded = EventFold("s1").fold(snapshot.journal.map { it.copy(surfaceOp = null, surfaceIntent = null) })
+        assertEquals(
+            listOf("plugin:translator/request", "plugin:translator/result"),
+            refolded.nodes.filterIsInstance<OtherNode>().map { it.type },
+        )
+        assertEquals(listOf("plugin:translator/request", "plugin:translator/result"), snapshot.journal.drop(1).map { it.type })
     }
 
     @Test
@@ -193,5 +251,99 @@ class ChatNodeVisibilityTest {
         val rows = renderableChatNodes(listOf(user(10), user(20), user(30), run, marker, done, user(50)), running = false)
         assertEquals(listOf(10L, 41L, 50L), rows.map { it.seq })
         assertTrue((rows[1] as UserMessageNode).isRewindMarker)
+    }
+
+    // ---- compaction (issue #98) ------------------------------------------------------------
+
+    private fun compaction(seq: Long, type: String, data: String) =
+        SessionEventEnvelope(type, seq, seq, Json.parseToJsonElement(data) as JsonObject)
+
+    private fun start(seq: Long, id: String) = compaction(seq, "compaction/start", """{"compactionId":"$id","turn":null}""")
+
+    private fun summary(seq: Long, id: String, text: String? = "the summary of $id") = compaction(
+        seq, "compaction/summary",
+        """{"compactionId":"$id","summary":[${if (text == null) "" else """{"type":"text","text":"$text"}"""}],""" +
+            """"shadowedRange":{"from":1,"to":9},"shadowedTokenCount":1200,"provider":"p","model":"m"}""",
+    )
+
+    private fun end(seq: Long, id: String, error: String? = null) =
+        compaction(seq, "compaction/end", """{"compactionId":"$id"${if (error != null) ""","error":"$error"""" else ""}}""")
+
+    private fun prune(seq: Long) = compaction(seq, "compaction/prune", """{"shadowedRange":{"from":3,"to":5},"shadowedTokenCount":300}""")
+
+    private fun userEvent(seq: Long, text: String) = SessionEventEnvelope(
+        "user/message", seq, seq,
+        Json.parseToJsonElement("""{"id":"m$seq","content":[{"type":"text","text":"$text"}],"source":{"kind":"user"}}""") as JsonObject,
+    )
+
+    private fun toolEvent(seq: Long, callId: String) = SessionEventEnvelope(
+        "tool/call", seq, seq,
+        Json.parseToJsonElement("""{"turn":1,"step":1,"callId":"$callId","name":"read","arguments":"{}"}""") as JsonObject,
+    )
+
+    private fun drawnCompactions(nodes: List<com.labteto.dshmobile.core.session.ChatNode>) =
+        renderableChatNodes(nodes, running = false).filterIsInstance<CompactionNode>()
+
+    @Test fun `only a compaction summary draws a row`() {
+        fun node(event: SessionEventEnvelope) = CompactionNode(event.seq, event.type, event.data)
+        assertFalse(node(start(1, "c")).rendersContent())
+        assertTrue(node(summary(2, "c")).rendersContent())
+        assertFalse(node(end(3, "c")).rendersContent())
+        // A failed attempt would otherwise draw a "Compacted" row that is not true.
+        assertFalse(node(end(3, "c", error = "model unavailable")).rendersContent())
+        assertFalse(node(prune(4)).rendersContent())
+    }
+
+    @Test fun `one compaction is one row however many events it wrote`() {
+        val events = listOf(start(10, "c1"), summary(11, "c1"), end(12, "c1"))
+        val snapshot = EventFold("s").fold(events)
+        // The fold still produces every node; the presentation decides which one is drawn.
+        assertEquals(3, snapshot.nodes.count { it is CompactionNode })
+        assertEquals(listOf(11L), drawnCompactions(snapshot.nodes).map { it.seq })
+    }
+
+    @Test fun `a prune draws nothing and two compactions draw two rows`() {
+        val events = listOf(
+            start(10, "c1"), summary(11, "c1"), end(12, "c1"),
+            prune(20),
+            start(30, "c2"), summary(31, "c2"), end(32, "c2"),
+        )
+        val snapshot = EventFold("s").fold(events)
+        assertEquals(listOf(11L, 31L), drawnCompactions(snapshot.nodes).map { it.seq })
+    }
+
+    @Test fun `a summary without text keeps its row`() {
+        val snapshot = EventFold("s").fold(listOf(start(10, "c1"), summary(11, "c1", text = null), end(12, "c1")))
+        assertEquals(listOf(11L), drawnCompactions(snapshot.nodes).map { it.seq })
+    }
+
+    @Test fun `messages and tool calls around a compaction draw as before`() {
+        val events = listOf(
+            userEvent(1, "hello"),
+            toolEvent(2, "c"),
+            start(3, "c1"), summary(4, "c1"), end(5, "c1"),
+            prune(6),
+            userEvent(7, "next"),
+        )
+        val withCompaction = renderableChatNodes(EventFold("s").fold(events).nodes, running = false)
+        val without = renderableChatNodes(
+            EventFold("s").fold(events.filterNot { it.type.startsWith("compaction/") }).nodes,
+            running = false,
+        )
+        assertEquals(listOf(1L, 2L, 7L), without.map { it.seq })
+        assertEquals(listOf(1L, 2L, 4L, 7L), withCompaction.map { it.seq })
+        // The grouping layer sees the same rows, with the compaction as its own row in between.
+        assertEquals(listOf(1L, 2L, 4L, 7L), groupToolRows(withCompaction).map { it.seq })
+    }
+
+    @Test fun `reopening the session and replaying its events does not draw a compaction twice`() {
+        val events = listOf(userEvent(1, "hello"), start(3, "c1"), summary(4, "c1"), end(5, "c1"), prune(6))
+        // History replay: a fresh fold of the same journal.
+        assertEquals(listOf(4L), drawnCompactions(EventFold("s").fold(events).nodes).map { it.seq })
+        // A reconnect that re-sends events the screen already holds is dropped by seq.
+        val held = EventFold("s").fold(events)
+        val incremental = EventFold.Incremental(held, "s")
+        events.forEach { assertNull(incremental.apply(it)) }
+        assertEquals(listOf(4L), drawnCompactions(held.nodes).map { it.seq })
     }
 }

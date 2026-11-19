@@ -3,8 +3,12 @@ package com.labteto.dshmobile.ui.components
 import android.os.Build
 import android.view.View
 import android.view.ViewGroup
+import android.view.ViewTreeObserver
 import android.view.Window
 import android.view.WindowManager
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.MutableTransitionState
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
@@ -19,19 +23,27 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntRect
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
+import com.labteto.dshmobile.ui.theme.DsAnimations
 import com.labteto.dshmobile.ui.theme.DsTheme
 import com.labteto.dshmobile.ui.theme.isDsDark
+import kotlinx.coroutines.delay
 import kotlin.math.max
 
 /**
@@ -43,16 +55,53 @@ import kotlin.math.max
  * The page is a dialog window rather than a composable drawn over the chat because it keeps the
  * window-level stacking the sheets, dialogs and pickers a page opens depend on, and because a page
  * can be opened from deep inside a list (the image viewer) where an overlay would be clipped.
+ *
+ * A window has no enter or exit of its own: composing it shows it, and leaving the composition
+ * removes it on the same frame. A page that wants one passes [visibleState]; the whole page
+ * (background included) then rises in and sinks away through it, and the caller keeps the page
+ * composed until the state reports it finished leaving (`currentState` false with nothing pending).
+ * Left null, the page appears and goes instantly, as every other page does.
+ *
+ * [onWindowReady] is called once the window has had the few frames it needs to reach the screen.
+ * An enter transition started with the composition plays out before anything is visible, so a
+ * caller that animates the page in starts its transition from here rather than from composition.
  */
 @Composable
 fun DsFullScreenDialog(
     onDismissRequest: () -> Unit,
     containerColor: Color = DsTheme.colors.bgBase,
+    visibleState: MutableTransitionState<Boolean>? = null,
+    onWindowReady: (() -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     DsWindow(onDismissRequest = onDismissRequest, dimBehind = false) { insets ->
-        Surface(Modifier.fillMaxSize(), color = containerColor) {
-            Column(Modifier.fillMaxSize().windowInsetsPadding(insets), content = content)
+        if (onWindowReady != null) {
+            val ready by rememberUpdatedState(onWindowReady)
+            LaunchedEffect(Unit) {
+                delay(WindowSettleMillis)
+                ready()
+            }
+        }
+        val page: @Composable () -> Unit = {
+            Surface(Modifier.fillMaxSize(), color = containerColor) {
+                // Back as a key press (Android 10 and 11) is looked at before a focused text field can
+                // swallow it, so with the keyboard up one back hides it and the next one closes the page
+                // instead of the page staying open for a third. See dismissOnBackKey.
+                Column(
+                    Modifier.fillMaxSize().windowInsetsPadding(insets).dismissOnBackKey { onDismissRequest() },
+                    content = content,
+                )
+            }
+        }
+        if (visibleState == null) {
+            page()
+        } else {
+            AnimatedVisibility(
+                visibleState = visibleState,
+                modifier = Modifier.fillMaxSize(),
+                enter = DsAnimations.pageEnter,
+                exit = DsAnimations.pageExit,
+            ) { page() }
         }
     }
 }
@@ -108,12 +157,23 @@ internal fun DsWindow(
         // dialog's own coordinates. The second half is the safety net for Android versions and phone
         // makers where a dialog window reports no bar insets, or sits somewhere other than the full
         // display; either would leave the bottom of a page under the gesture bar.
-        val insets = remember(bars, cutout, keyboard, host, windowView) {
-            bars.union(cutout).union(keyboard).union(HostRelative(host, windowView))
+        val relative = remember(host, windowView) { HostRelative(host, windowView) }
+        TrackPlacement(relative, windowView, host.view)
+        val insets = remember(bars, cutout, keyboard, relative) {
+            bars.union(cutout).union(keyboard).union(relative)
         }
-        CompositionLocalProvider(LocalDsHost provides host) { content(insets) }
+        // Escape closes any window the app opens, as back does on a touch screen.
+        CompositionLocalProvider(LocalDsHost provides host) {
+            Box(Modifier.fillMaxSize().dismissOnEscape { onDismissRequest() }) { content(insets) }
+        }
     }
 }
+
+/**
+ * How long a freshly composed dialog window takes to reach the screen on a phone: measured on a
+ * 60Hz emulator, the first frames of anything started with the composition were never seen.
+ */
+private const val WindowSettleMillis = 120L
 
 /** The activity's window and the bars it reports, which every dialog window falls back to. */
 @Immutable
@@ -126,46 +186,75 @@ internal val LocalDsHost = compositionLocalOf<DsHost?> { null }
  * the activity window: the safe rectangle is worked out in screen coordinates, then each side is
  * however far the window reaches past it. For a dialog that is exactly the activity's size and
  * place this is the activity's insets unchanged.
+ *
+ * The two windows' rectangles are the ones they had after their last layout ([placement], kept up to
+ * date by [TrackPlacement]), never the views' sizes read while measuring. Compose measures a window's
+ * content for its new size before the view itself takes that size: right after a rotation the page
+ * was measured at 2340 x 1080 while its view still said 1080 x 2340, so the bottom inset came out as
+ * 1326 px, taller than the whole landscape window. The page was measured at zero height, and as
+ * nothing measured it again once the view caught up, it stayed blank. A rectangle from the last
+ * layout is a frame late at worst, and is state: when the new one arrives, the page is measured again.
  */
 private class HostRelative(private val host: DsHost, private val windowView: View) : WindowInsets {
-    private val here = IntArray(2)
-    private val there = IntArray(2)
+    /** The window's and the activity's rectangles on screen after their last layout, or null before the first. */
+    var placement by mutableStateOf<Placement?>(null)
+        private set
 
-    private fun placed(): Boolean =
-        windowView.isAttachedToWindow && windowView.width > 0 && windowView.height > 0 &&
-            host.view.isAttachedToWindow && host.view.width > 0 && host.view.height > 0
+    @Immutable
+    data class Placement(val window: IntRect, val host: IntRect)
 
-    private fun locate() {
-        windowView.getLocationOnScreen(here)
-        host.view.getLocationOnScreen(there)
+    /** Reads both views' places now. Called after a layout pass, when a view's size is its real one. */
+    fun update() {
+        if (!windowView.isAttachedToWindow || !host.view.isAttachedToWindow) return
+        if (windowView.width <= 0 || windowView.height <= 0 || host.view.width <= 0 || host.view.height <= 0) return
+        val here = IntArray(2).also(windowView::getLocationOnScreen)
+        val there = IntArray(2).also(host.view::getLocationOnScreen)
+        val next = Placement(
+            window = IntRect(here[0], here[1], here[0] + windowView.width, here[1] + windowView.height),
+            host = IntRect(there[0], there[1], there[0] + host.view.width, there[1] + host.view.height),
+        )
+        if (next != placement) placement = next
     }
 
     override fun getLeft(density: Density, layoutDirection: LayoutDirection): Int {
         val inset = host.bars.getLeft(density, layoutDirection)
-        if (!placed()) return inset
-        locate()
-        return max(0, there[0] + inset - here[0])
+        val p = placement ?: return inset
+        return max(0, p.host.left + inset - p.window.left)
     }
 
     override fun getTop(density: Density): Int {
         val inset = host.bars.getTop(density)
-        if (!placed()) return inset
-        locate()
-        return max(0, there[1] + inset - here[1])
+        val p = placement ?: return inset
+        return max(0, p.host.top + inset - p.window.top)
     }
 
     override fun getRight(density: Density, layoutDirection: LayoutDirection): Int {
         val inset = host.bars.getRight(density, layoutDirection)
-        if (!placed()) return inset
-        locate()
-        return max(0, (here[0] + windowView.width) - (there[0] + host.view.width - inset))
+        val p = placement ?: return inset
+        return max(0, p.window.right - (p.host.right - inset))
     }
 
     override fun getBottom(density: Density): Int {
         val inset = host.bars.getBottom(density)
-        if (!placed()) return inset
-        locate()
-        return max(0, (here[1] + windowView.height) - (there[1] + host.view.height - inset))
+        val p = placement ?: return inset
+        return max(0, p.window.bottom - (p.host.bottom - inset))
+    }
+}
+
+/**
+ * Keeps [relative]'s rectangles current: after every layout of the page's window or of the activity's
+ * (a rotation, a split-screen resize, a fold, the keyboard), both are read again.
+ */
+@Composable
+private fun TrackPlacement(relative: HostRelative, windowView: View, hostView: View) {
+    DisposableEffect(relative, windowView, hostView) {
+        val listener = ViewTreeObserver.OnGlobalLayoutListener { relative.update() }
+        val views = listOf(windowView, hostView).distinct()
+        views.forEach { it.viewTreeObserver.addOnGlobalLayoutListener(listener) }
+        relative.update()
+        onDispose {
+            views.forEach { view -> view.viewTreeObserver.takeIf { it.isAlive }?.removeOnGlobalLayoutListener(listener) }
+        }
     }
 }
 
@@ -224,4 +313,17 @@ private fun Window.coverDisplay(dimBehind: Boolean, dark: Boolean) {
         isAppearanceLightStatusBars = !dark
         isAppearanceLightNavigationBars = !dark
     }
+}
+
+/**
+ * The window a composable is drawn in when that is one of the app's dialog windows, or null.
+ * Here because this file is the one place that may touch Compose's window classes.
+ */
+internal fun View.dsDialogWindow(): android.view.Window? {
+    var current: Any? = this
+    while (current is View) {
+        if (current is DialogWindowProvider) return current.window
+        current = current.parent
+    }
+    return null
 }

@@ -62,7 +62,8 @@ private val SUMMARY_KEYS: Map<ToolRowVariant, List<String>> = mapOf(
     ToolRowVariant.Write to listOf("path", "file_path"),
     ToolRowVariant.Edit to listOf("path", "file_path"),
     ToolRowVariant.Code to listOf("description"),
-    ToolRowVariant.Other to emptyList(),
+    // Any other tool: the first argument that reads as a subject. The title already names the tool.
+    ToolRowVariant.Other to listOf("description", "title", "name", "objective", "file_path", "path", "url", "query", "prompt"),
 )
 
 private val LENIENT_JSON = Json { ignoreUnknownKeys = true; isLenient = true }
@@ -117,20 +118,37 @@ internal fun toolRowModel(
         .orEmpty()
         .firstNotNullOfOrNull { key -> displayArguments?.get(key).asSummary()?.takeIf { it.isNotBlank() } }
     val relative = derived?.let { relativizeToCwd(it, cwd) }
-    // An unclassified tool with no presenter title would otherwise render as a bare "Tool call"
-    // with nothing identifying it, so its raw name carries the summary instead.
-    val needsToolName = variant == ToolRowVariant.Other && viewTitle == null && toolName.isNotBlank()
-    val summary = when {
-        relative == null -> if (needsToolName) toolName else null
-        needsToolName -> "$toolName · $relative"
-        else -> relative
+    // An unclassified tool with no presenter title used to read "Tool call · list_subagent_models":
+    // the tool's code name, which says little to anyone who is not reading the harness's source. Its
+    // name in words is the title instead, and the summary is free for what it acted on.
+    val unnamed = variant == ToolRowVariant.Other && viewTitle == null && toolName.isNotBlank()
+    val title = when {
+        !viewTitle.isNullOrBlank() -> viewTitle
+        unnamed -> humanizeIdentifier(toolName)
+        // The harness's PowerShell tool is not bash, and the row should not say it is.
+        toolName.equals("pwsh", ignoreCase = true) -> POWERSHELL_TITLE
+        else -> variant.title
     }
     return ToolRowModel(
         variant = variant,
-        title = viewTitle?.takeIf { it.isNotBlank() } ?: variant.title,
-        summary = summary,
+        title = title,
+        summary = relative?.let(::rowSummaryText),
         filePath = filePathOf(variant, arguments),
     )
+}
+
+/** The PowerShell tool's row title: a product name, the same in every language. */
+internal const val POWERSHELL_TITLE = "PowerShell"
+
+/**
+ * A background job's producer kind (`bash`, `pwsh`, `pty-send`, `subagent`) as words: the shells by
+ * their product names, anything else as [humanizeIdentifier] reads it. The job sheet, the Details
+ * panel and the Jobs card all say "PowerShell", never the wire name `pwsh`.
+ */
+internal fun jobKindLabel(kind: String): String = when (kind.lowercase()) {
+    "pwsh" -> POWERSHELL_TITLE
+    "bash" -> "Bash"
+    else -> humanizeIdentifier(kind)
 }
 
 /**
@@ -171,4 +189,19 @@ private fun JsonElement?.asSummary(): String? = when (this) {
 private fun parseArguments(argumentsJson: String?): JsonObject? {
     val raw = argumentsJson?.takeIf { it.isNotBlank() } ?: return null
     return runCatching { LENIENT_JSON.parseToJsonElement(raw) as? JsonObject }.getOrNull()
+}
+
+/** The most of a summary a one-line row is given to lay out. */
+internal const val ROW_SUMMARY_MAX_CHARS = 400
+
+/**
+ * A summary cut to what a one-line row can show. The row ellipsizes anyway, but Android shapes the
+ * whole string before it cuts it: a 300 KB command handed to the row in full took the app's native
+ * heap past 3 GB on a phone emulator (the built-in harness's oversized-command check, found in the
+ * integration run). Only the first line is kept, and at most [ROW_SUMMARY_MAX_CHARS] characters of it.
+ */
+internal fun rowSummaryText(summary: String): String {
+    val firstLine = summary.lineSequence().firstOrNull { it.isNotBlank() } ?: summary
+    val cut = if (firstLine.length > ROW_SUMMARY_MAX_CHARS) firstLine.take(ROW_SUMMARY_MAX_CHARS) + "…" else firstLine
+    return if (cut.length < summary.length && !cut.endsWith("…")) "$cut…" else cut
 }

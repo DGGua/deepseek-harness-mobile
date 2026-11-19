@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">সর্বশেষ আপডেট অনুযায়ী সাজান</string>
     <string name="chatlist_sort_manual">ম্যানুয়াল ক্রম</string>
     <string name="chat_composer_hint">এজেন্টকে বার্তা পাঠান…</string>
+    <string name="chat_composer_expand">পূর্ণ স্ক্রিন সম্পাদক খুলুন</string>
+    <string name="chat_composer_fullscreen_title">বার্তা</string>
     <string name="chat_composer_queue">কিউ</string>
     <string name="chat_composer_steer">নির্দেশ দিন</string>
     <string name="chat_composer_stop">থামান</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">ইনপুট ও আউটপুট দেখতে চ্যাটে একটি টুল সারি বেছে নিন।</string>
     <string name="chat_input_placeholder">ইনপুট</string>
     <string name="chat_output_placeholder">আউটপুট</string>
+    <string name="tool_output_show_raw">মূল JSON দেখান</string>
+    <string name="tool_output_hide_raw">মূল JSON লুকান</string>
+    <string name="tool_output_copy_raw">মূল JSON কপি করুন</string>
     <string name="goal_title">লক্ষ্য</string>
     <string name="goal_none">কোনো চালু লক্ষ্য নেই</string>
     <string name="goal_phase_active">চালু</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">উত্তর লেখার সময় সবচেয়ে নতুন বার্তা চোখের সামনে থাকে। নিজের গতিতে পড়তে উপরে স্ক্রল করুন। নিচে ফিরে এলে আবার চালু হয়ে যায়।</string>
     <string name="settings_default_delivery_mode">ডিফল্ট পাঠানোর ধরন</string>
     <string name="settings_default_delivery_mode_hint">কোনো টার্ন চলার সময় পাঠালে এটি ব্যবহার হবে। প্রতিটি বার্তার জন্য আলাদা ধরনও বেছে নিতে পারবেন।</string>
+    <string name="settings_work_steps">কাজের ধাপ</string>
+    <string name="settings_work_steps_hint">এটি শুধু চ্যাট দেখানোর ধরন বদলায়, আর শুধু এই ডিভাইসে। কোনো সারিতে ট্যাপ করলে শুধু সেটিই খোলে বা বন্ধ হয়।</string>
+    <string name="settings_auto_translate_reasoning">চিন্তার প্রক্রিয়া নিজে থেকে অনুবাদ</string>
+    <string name="settings_auto_translate_reasoning_hint">চিন্তার প্রক্রিয়া খুললে সেটি অনুবাদ হয়, অনুবাদ বোতামের মতো একই প্রদানকারী ও ভাষায়। প্রতিটি অনুবাদে লেখাটি ওই প্রদানকারীর কাছে পাঠানো হয়। মডেলভিত্তিক প্রদানকারীতে আপনার টোকেন খরচ হয়, Bing ও Google-এ হয় না।</string>
+    <string name="settings_auto_translate_reasoning_unavailable">এই harness-এ অনুবাদ সেট করা নেই, তাই এখানে এই সুইচ কিছু করে না। harness-এ অনুবাদ প্লাগইন চালু করে একজন প্রদানকারী বেছে নিন।</string>
+    <string name="settings_auto_translate_reasoning_no_host">অনুবাদ করা যায় কি না দেখতে একটি harness-এর সাথে সংযুক্ত হন।</string>
+    <string name="reasoning_translation_failed">অনুবাদ করা গেল না। মূল লেখাটি আগের মতোই আছে।</string>
+    <string name="work_steps_compact">সংক্ষিপ্ত</string>
+    <string name="work_steps_compact_hint">শেষ হওয়া কাজ এক সারিতে গুটিয়ে যায়। টুল কল বন্ধ গ্রুপে থাকে।</string>
+    <string name="work_steps_standard">স্ট্যান্ডার্ড</string>
+    <string name="work_steps_standard_hint">সংক্ষিপ্তের মতোই, তবে চলমান গ্রুপ কোন ধাপে আছে তা দেখায়। চিন্তার প্রথম লাইন দেখা যায়।</string>
+    <string name="work_steps_detailed">বিস্তারিত</string>
+    <string name="work_steps_detailed_hint">স্ট্যান্ডার্ডের মতোই, তবে চলমান টার্নের টুল কল একটি একটি করে দেখায়।</string>
+    <string name="work_steps_verbose">সম্পূর্ণ খোলা</string>
+    <string name="work_steps_verbose_hint">কিছুই গোটানো বা গ্রুপ করা হয় না। টুল কল নিজে থেকেই খোলে, লম্বা আউটপুটের শুরুটুকু দেখায়।</string>
+    <string name="work_steps_clipped">লম্বা ফলাফলের শুরুটুকু দেখানো হচ্ছে।</string>
+    <string name="work_steps_show_all">সব দেখান</string>
     <string name="settings_plugins">প্লাগইন</string>
     <string name="settings_plugins_inventory">প্লাগইন তালিকা</string>
     <string name="settings_language">ভাষা</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d মাস</string>
     <string name="time_years">%1$d বছর</string>
     <string name="chatlist_open">চ্যাট খুলুন</string>
+    <string name="chatlist_hide">চ্যাট লুকান</string>
+    <string name="chatlist_show">চ্যাট দেখান</string>
     <string name="chatlist_workspace_rename">প্রজেক্টের নাম বদলান</string>
     <string name="chatlist_workspace_delete">প্রজেক্ট সরান</string>
     <string name="chatlist_workspace_delete_confirm">এই প্রজেক্টটি harness থেকে সরাবেন? এর ফোল্ডার আর সেশন লগ যেমন আছে তেমনই থাকবে।</string>
@@ -297,7 +321,7 @@
     <string name="update_open">রিলিজ দেখুন</string>
     <string name="update_later">পরে</string>
     <string name="settings_update_check">আপডেট আছে কি না দেখুন</string>
-    <string name="settings_update_check_hint">অ্যাপ চালু হলে GitHub থেকে সবচেয়ে নতুন রিলিজের খোঁজ নেয়, আর কয়েক ঘণ্টা পর অ্যাপে ফিরলেও নেয়।</string>
+    <string name="settings_update_check_hint">GitHub-এ অ্যাপের নতুন সংস্করণ খোঁজে, আর এই ফোনে harness সেট আপ থাকলে তারও। অ্যাপ চালু হলে, আর কয়েক ঘণ্টা পর অ্যাপে ফিরলে আবার।</string>
     <string name="connect_mode_lan">লোকাল নেটওয়ার্ক</string>
     <string name="connect_mode_relay">রিলে</string>
     <string name="pair_title">রিলে পেয়ার করুন</string>
@@ -356,9 +380,11 @@
     <string name="jobs_stopping">থামানো হচ্ছে</string>
     <string name="jobs_output_empty">এখনও কোনো আউটপুট নেই</string>
     <string name="jobs_output_dropped">আগের আউটপুট বাদ দেওয়া হয়েছে</string>
-    <string name="archive_busy_title">এখনও চলছে</string>
-    <string name="archive_busy_body">এই সেশনে এখনও কাজ চলছে: %1$s। আর্কাইভ করলে আগে সেই কাজ থামানো হবে।</string>
+    <string name="archive_busy_title">এই সেশন থামিয়ে আর্কাইভ করবেন?</string>
+    <string name="archive_busy_body">এই সেশনে এখনও কাজ চলছে। আর্কাইভ করলে আগে সেই কাজ থামানো হবে।</string>
     <string name="archive_busy_confirm">থামান ও আর্কাইভ করুন</string>
+    <string name="archive_busy_after">থামানো কাজ নিজে থেকে আবার চলবে না। পরে “আর্কাইভ করা সেশন” থেকে সেশনটি খুঁজে নিয়ে আবার চালিয়ে যেতে পারবেন।</string>
+    <string name="archive_activity_more">আরও %1$dটি</string>
     <string name="archive_activity_turn">বর্তমান টার্ন</string>
     <string name="archive_activity_subagent">সাবএজেন্ট</string>
     <string name="archive_activity_job">ব্যাকগ্রাউন্ড কাজ</string>
@@ -421,6 +447,15 @@
     <string name="harness_automation_history_not_found">এই কাজটি আর নেই।</string>
     <string name="harness_automation_history_cursor_error">রেকর্ড বদলে গেছে। আবার চেষ্টা করুন।</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">আপনি অনুমতি বদলে %1$s করেছেন</string>
+    <string name="system_line_permission_changed_plain">আপনি অনুমতি বদলেছেন</string>
+    <string name="system_line_permission_failed">অনুমতি বদলানো যায়নি</string>
+    <string name="system_line_compact">আপনি কথোপকথন ছোট করেছেন</string>
+    <string name="system_line_plan_on">আপনি প্ল্যান মোড চালু করেছেন</string>
+    <string name="system_line_plan_off">আপনি প্ল্যান মোড বন্ধ করেছেন</string>
+    <string name="system_line_command">আপনি %1$s চালিয়েছেন</string>
+    <string name="system_line_command_failed">%1$s চালানো যায়নি</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">এখান পর্যন্ত রিওয়াইন্ড করা হয়েছে</string>
     <string name="rewind_no_text">(কোনো টেক্সট নেই)</string>
@@ -516,10 +551,9 @@
     <string name="hold_replace_draft_confirm">বদলান</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">সীমা ও ব্যালেন্স</string>
+    <string name="quota_title">ব্যবহার</string>
     <string name="quota_short">৫ ঘণ্টা</string>
     <string name="quota_week">সপ্তাহ</string>
-    <string name="quota_unknown">সীমার তথ্য নেই</string>
     <string name="quota_refresh">আবার যাচাই করুন</string>
     <string name="quota_checked">যাচাই করা হয়েছে: %1$s</string>
     <string name="quota_all">সব প্রদানকারী</string>
@@ -535,11 +569,43 @@
     <string name="quota_compact_minute">মি</string>
     <string name="quota_other">অন্য সীমা</string>
     <string name="quota_remaining_percent">অবশিষ্ট: %1$s</string>
+    <string name="quota_session_title">এই সেশন</string>
+    <string name="quota_tokens_input">ইনপুট</string>
+    <string name="quota_tokens_output">আউটপুট</string>
+    <string name="quota_tokens_cache">ক্যাশ হিট</string>
+    <string name="quota_tokens_total">মোট</string>
+    <string name="quota_session_empty">এখনও কোনো টোকেন ব্যবহার হয়নি</string>
+    <string name="quota_balance_title">DeepSeek ব্যালেন্স</string>
+    <string name="quota_balance_bonus">বোনাস: %1$s</string>
+    <string name="quota_balance_failed">ব্যালেন্স লোড করা যায়নি</string>
+    <string name="quota_limit_reached">ব্যবহারের সীমা শেষ হয়ে গেছে</string>
+    <string name="quota_rate_limited">অনেক বেশি অনুরোধ হয়েছে, একটু পরে আবার চেষ্টা করুন</string>
+    <string name="quota_limit_short">সীমা শেষ</string>
+    <string name="quota_rate_short">অনুরোধ সীমিত</string>
     <string name="permission_preset_read_only">শুধু পড়া</string>
     <string name="permission_preset_workspace_write">ওয়ার্কস্পেসে লেখা</string>
     <string name="permission_preset_full_access">সম্পূর্ণ অ্যাক্সেস</string>
     <string name="permission_preset_auto">স্বয়ংক্রিয় পর্যালোচনা</string>
     <string name="permission_preset_auto_desc">প্রতিটি নেটিভ টুল কল এবং PTC অভ্যন্তরীণ কলের আগে একই মডেলের পরীক্ষামূলক পর্যালোচনার পরে স্যান্ডবক্স ছাড়াই চলে।</string>
+    <string name="shortcuts_group_message">বার্তার ঘর</string>
+    <string name="shortcuts_group_sessions">সেশন</string>
+    <string name="shortcuts_group_general">সাধারণ</string>
+    <string name="shortcuts_send">বার্তা পাঠান</string>
+    <string name="shortcuts_newline">নতুন লাইন</string>
+    <string name="shortcuts_focus_composer">বার্তার ঘরে যান</string>
+    <string name="shortcuts_new_session">নতুন সেশন</string>
+    <string name="shortcuts_search_sessions">সেশন খুঁজুন</string>
+    <string name="shortcuts_toggle_list">সেশন দেখান বা লুকান</string>
+    <string name="shortcuts_settings">সেটিংস খুলুন</string>
+    <string name="shortcuts_close">শিট বা ডায়ালগ বন্ধ করুন</string>
+    <string name="chat_drop_hint">সংযুক্ত করতে ফাইলগুলো এখানে ছেড়ে দিন</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">এই ফোনে harness সেট আপ হচ্ছে</string>
+    <string name="runtime_notif_downloading">ডাউনলোড হচ্ছে, %1$d%% সম্পন্ন</string>
+    <string name="runtime_notif_unpacking">ফাইলগুলো খোলা হচ্ছে</string>
+    <string name="runtime_notif_starting">এই ফোনে harness চালু হচ্ছে</string>
+    <string name="runtime_notif_running">এই ফোনে harness চলছে</string>
+    <string name="runtime_notif_running_text">পোর্ট %1$d-এ শুনছে</string>
     <string name="hostswitcher_title">ব্যাকএন্ড</string>
     <string name="hostswitcher_empty">অন্য কোনো সংরক্ষিত ব্যাকএন্ড নেই। এখানে যোগ করতে কানেক্ট স্ক্রিন থেকে একটির সাথে সংযোগ করুন।</string>
     <string name="hostswitcher_current">বর্তমান</string>

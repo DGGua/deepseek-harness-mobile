@@ -46,7 +46,8 @@ private fun SessionEventEnvelope.sourceKindOf(): String? =
  *    on the `assistant/message` itself, and that wins; a `turn/end` whose reason
  *    kind is `interrupted`/`aborted`/`error` marks the turn's assistant node
  *    otherwise, which is all an rc.7 host gives.
- *  - unknown event types become [OtherNode] (merge-extensible contract).
+ *  - unknown event types become [OtherNode] (merge-extensible contract), carrying the harness's
+ *    `ignorable` marker so a renderer can tell a skippable plugin record from a required event.
  *
  * The fold is pure: same events → same snapshot.
  */
@@ -192,7 +193,10 @@ private class FoldState(private val sessionId: String) {
                 val turn = data.jsonObject["turn"]?.jsonPrimitive?.intOrNull ?: 0
                 val reason = data.jsonObject["reason"]?.jsonObject
                 val kind = reason?.get("kind")?.jsonPrimitive?.contentOrNull ?: "completed"
-                nodes.add(TurnEndNode(event.seq, turn, kind, reason?.get("reason")))
+                val failure = reason?.get("error") as? JsonObject
+                val failureCode = failure?.get("code")?.let { it as? JsonPrimitive }?.contentOrNull
+                val failureMessage = failure?.get("message")?.let { it as? JsonPrimitive }?.contentOrNull
+                nodes.add(TurnEndNode(event.seq, turn, kind, reason?.get("reason"), failureCode, failureMessage))
                 if (kind == "interrupted" || kind == "aborted" || kind == "error") {
                     markInterrupted(turn)
                 }
@@ -268,7 +272,18 @@ private class FoldState(private val sessionId: String) {
                 val result = toolResultOf(data.jsonObject["message"] as? JsonObject)
                 val turn = data.jsonObject["turn"]?.jsonPrimitive?.intOrNull ?: 0
                 val step = data.jsonObject["step"]?.jsonPrimitive?.intOrNull ?: 0
-                nodes.add(ToolResultNode(event.seq, result.callId, result.content, result.isError, turn, step, data.jsonObject["meta"]))
+                // The harness records a thrown error's `{ name, code }` beside the message.
+                val error = data.jsonObject["error"] as? JsonObject
+                val errorCode = (error?.get("code") as? JsonPrimitive)?.contentOrNull
+                val errorName = (error?.get("name") as? JsonPrimitive)?.contentOrNull
+                // Auto review's refusal carries the reviewer's reason beside the code.
+                val errorReason = (error?.get("reason") as? JsonPrimitive)?.takeIf { it.isString }?.contentOrNull
+                nodes.add(
+                    ToolResultNode(
+                        event.seq, result.callId, result.content, result.isError, turn, step,
+                        data.jsonObject["meta"], errorCode, errorName, errorReason,
+                    ),
+                )
             }
 
             // Harness 0.1.7: the agent's tool set changed mid-session. Model-visible context, not
@@ -311,9 +326,14 @@ private class FoldState(private val sessionId: String) {
             // Everything else passes through as an untyped row: the known ones because
             // presentation labels or hides them, the unknown ones because staying visible is the
             // compatibility contract. `EventClassification` says which is which.
+            //
+            // The harness's `ignorable` marker rides along on the node rather than deciding here:
+            // an unknown type the harness marked skippable (every `plugin:` record) is hidden from
+            // the transcript by `OtherNode.isSkippableUnknown`, but the node itself stays so the
+            // Trajectory ledger, which folds the same journal, can still list it.
             in EventClassification.LOG_ONLY -> Unit
 
-            else -> nodes.add(OtherNode(event.seq, event.type, data))
+            else -> nodes.add(OtherNode(event.seq, event.type, data, ignorable = event.ignorable == true))
         }
     }
 

@@ -46,6 +46,8 @@
     <string name="chatlist_sort_updated">Сортировать по дате обновления</string>
     <string name="chatlist_sort_manual">Вручную</string>
     <string name="chat_composer_hint">Напишите агенту…</string>
+    <string name="chat_composer_expand">Открыть полноэкранный редактор</string>
+    <string name="chat_composer_fullscreen_title">Сообщение</string>
     <string name="chat_composer_queue">Очередь</string>
     <string name="chat_composer_steer">Направить</string>
     <string name="chat_composer_stop">Стоп</string>
@@ -77,6 +79,9 @@
     <string name="chat_details_empty">Выберите строку инструмента в чате, чтобы увидеть, что ему передали и что он вернул.</string>
     <string name="chat_input_placeholder">Ввод</string>
     <string name="chat_output_placeholder">Вывод</string>
+    <string name="tool_output_show_raw">Показать исходный JSON</string>
+    <string name="tool_output_hide_raw">Скрыть исходный JSON</string>
+    <string name="tool_output_copy_raw">Копировать исходный JSON</string>
     <string name="goal_title">Цель</string>
     <string name="goal_none">Нет активной цели</string>
     <string name="goal_phase_active">Активна</string>
@@ -153,6 +158,23 @@
     <string name="settings_follow_streaming_hint">Последнее сообщение остаётся на виду, пока пишется ответ. Прокрутите вверх, чтобы читать в своём темпе. Когда вернётесь вниз, прокрутка за ответом продолжится.</string>
     <string name="settings_default_delivery_mode">Режим отправки по умолчанию</string>
     <string name="settings_default_delivery_mode_hint">Используется при отправке во время текущего хода. Для каждого сообщения по-прежнему можно выбрать другой режим.</string>
+    <string name="settings_work_steps">Шаги работы</string>
+    <string name="settings_work_steps_hint">Меняет только вид чата и только на этом устройстве. Нажмите на строку, чтобы открыть или закрыть только её.</string>
+    <string name="settings_auto_translate_reasoning">Автоперевод хода рассуждений</string>
+    <string name="settings_auto_translate_reasoning_hint">Переводит ход рассуждений, когда вы его открываете, тем же сервисом и на тот же язык, что и кнопка «Перевести». Каждый перевод отправляет текст этому провайдеру. Провайдер на основе модели тратит ваши токены, а Bing и Google не тратят.</string>
+    <string name="settings_auto_translate_reasoning_unavailable">В этом harness не настроен перевод, поэтому переключатель здесь ничего не делает. Включите плагин перевода и выберите провайдера в harness.</string>
+    <string name="settings_auto_translate_reasoning_no_host">Подключитесь к harness, чтобы узнать, умеет ли он переводить.</string>
+    <string name="reasoning_translation_failed">Не удалось перевести. Оригинал остался на месте.</string>
+    <string name="work_steps_compact">Кратко</string>
+    <string name="work_steps_compact_hint">Завершённая работа сворачивается в одну строку. Вызовы инструментов остаются в закрытой группе.</string>
+    <string name="work_steps_standard">Стандартно</string>
+    <string name="work_steps_standard_hint">Как «Кратко», плюс запущенная группа показывает текущий шаг, а рассуждение показывает первую строку.</string>
+    <string name="work_steps_detailed">Подробно</string>
+    <string name="work_steps_detailed_hint">Как «Стандартно», но вызовы инструментов текущего хода показываются по одному.</string>
+    <string name="work_steps_verbose">Всё раскрыто</string>
+    <string name="work_steps_verbose_hint">Ничего не сворачивается и не группируется. Вызовы инструментов открываются сами и показывают начало длинного вывода.</string>
+    <string name="work_steps_clipped">Показано начало длинного результата.</string>
+    <string name="work_steps_show_all">Показать всё</string>
     <string name="settings_plugins">Плагины</string>
     <string name="settings_plugins_inventory">Каталог плагинов</string>
     <string name="settings_language">Язык</string>
@@ -211,6 +233,8 @@
     <string name="time_months">%1$d мес</string>
     <string name="time_years">%1$d г</string>
     <string name="chatlist_open">Открыть чаты</string>
+    <string name="chatlist_hide">Скрыть чаты</string>
+    <string name="chatlist_show">Показать чаты</string>
     <string name="chatlist_workspace_rename">Переименовать проект</string>
     <string name="chatlist_workspace_delete">Убрать проект</string>
     <string name="chatlist_workspace_delete_confirm">Убрать этот проект из harness? Его папка и журналы сеансов останутся как есть.</string>
@@ -297,7 +321,7 @@
     <string name="update_open">Открыть релиз</string>
     <string name="update_later">Позже</string>
     <string name="settings_update_check">Проверять обновления</string>
-    <string name="settings_update_check_hint">При запуске приложения и при возвращении в него через несколько часов проверяет на GitHub последний релиз.</string>
+    <string name="settings_update_check_hint">Проверяет на GitHub, есть ли новая версия приложения, а также harness, если он настроен на этом телефоне. При запуске приложения и при возвращении в него через несколько часов.</string>
     <string name="connect_mode_lan">Локальная сеть</string>
     <string name="connect_mode_relay">Реле</string>
     <string name="pair_title">Сопряжение с реле</string>
@@ -356,13 +380,15 @@
     <string name="jobs_stopping">Останавливается</string>
     <string name="jobs_output_empty">Вывода пока нет</string>
     <string name="jobs_output_dropped">Более ранний вывод удалён</string>
-    <string name="archive_busy_title">Ещё выполняется</string>
-    <string name="archive_busy_body">В этом сеансе ещё выполняется работа: %1$s. Перед архивацией она будет остановлена.</string>
+    <string name="archive_busy_title">Остановить и архивировать этот сеанс?</string>
+    <string name="archive_busy_body">В этом сеансе ещё выполняется работа. Перед архивацией она будет остановлена.</string>
     <string name="archive_busy_confirm">Остановить и архивировать</string>
-    <string name="archive_activity_turn">текущий ход</string>
-    <string name="archive_activity_subagent">субагенты</string>
-    <string name="archive_activity_job">фоновые задачи</string>
-    <string name="archive_activity_schedule">расписания</string>
+    <string name="archive_busy_after">Остановленная работа сама не продолжится. Сеанс можно найти в «Архивных сеансах» и возобновить.</string>
+    <string name="archive_activity_more">и ещё %1$d</string>
+    <string name="archive_activity_turn">Текущий ход</string>
+    <string name="archive_activity_subagent">Субагенты</string>
+    <string name="archive_activity_job">Фоновые задачи</string>
+    <string name="archive_activity_schedule">Расписания</string>
     <string name="chatlist_pinned">Закреплённые</string>
     <string name="chatlist_session_pin">Закрепить сеанс</string>
     <string name="chatlist_session_unpin">Открепить сеанс</string>
@@ -421,6 +447,15 @@
     <string name="harness_automation_history_not_found">Эта задача больше недоступна.</string>
     <string name="harness_automation_history_cursor_error">Записи изменились. Попробуйте ещё раз.</string>
 
+    <!-- System lines: things the user did that are not chat messages, told in the transcript -->
+    <string name="system_line_permission_changed">Вы изменили разрешение на «%1$s»</string>
+    <string name="system_line_permission_changed_plain">Вы изменили разрешение</string>
+    <string name="system_line_permission_failed">Не удалось изменить разрешение</string>
+    <string name="system_line_compact">Вы сжали разговор</string>
+    <string name="system_line_plan_on">Вы включили режим плана</string>
+    <string name="system_line_plan_off">Вы выключили режим плана</string>
+    <string name="system_line_command">Вы запустили %1$s</string>
+    <string name="system_line_command_failed">Не удалось выполнить %1$s</string>
     <!-- dsh-rewind picker (port of the plugin's web popover) -->
     <string name="rewind_marker">Откат до этого места</string>
     <string name="rewind_no_text">(без текста)</string>
@@ -516,10 +551,9 @@
     <string name="hold_replace_draft_confirm">Заменить</string>
 
     <!-- Provider usage -->
-    <string name="quota_title">Лимиты и баланс</string>
+    <string name="quota_title">Использование</string>
     <string name="quota_short">5ч</string>
     <string name="quota_week">Неделя</string>
-    <string name="quota_unknown">Нет данных о лимитах</string>
     <string name="quota_refresh">Проверить</string>
     <string name="quota_checked">Проверено: %1$s</string>
     <string name="quota_all">Все провайдеры</string>
@@ -535,11 +569,43 @@
     <string name="quota_compact_minute">м</string>
     <string name="quota_other">Другой лимит</string>
     <string name="quota_remaining_percent">Осталось: %1$s</string>
+    <string name="quota_session_title">Эта сессия</string>
+    <string name="quota_tokens_input">Вход</string>
+    <string name="quota_tokens_output">Выход</string>
+    <string name="quota_tokens_cache">Попадания в кэш</string>
+    <string name="quota_tokens_total">Всего</string>
+    <string name="quota_session_empty">Токены пока не использованы</string>
+    <string name="quota_balance_title">Баланс DeepSeek</string>
+    <string name="quota_balance_bonus">Бонус: %1$s</string>
+    <string name="quota_balance_failed">Не удалось загрузить баланс</string>
+    <string name="quota_limit_reached">Достигнут лимит использования</string>
+    <string name="quota_rate_limited">Слишком много запросов, попробуйте чуть позже</string>
+    <string name="quota_limit_short">Лимит исчерпан</string>
+    <string name="quota_rate_short">Лимит запросов</string>
     <string name="permission_preset_read_only">Только чтение</string>
     <string name="permission_preset_workspace_write">Запись в рабочей области</string>
     <string name="permission_preset_full_access">Полный доступ</string>
     <string name="permission_preset_auto">Автопроверка</string>
     <string name="permission_preset_auto_desc">Запуск без песочницы после экспериментальной проверки той же моделью каждого вызова встроенного инструмента и внутреннего вызова PTC.</string>
+    <string name="shortcuts_group_message">Поле сообщения</string>
+    <string name="shortcuts_group_sessions">Сеансы</string>
+    <string name="shortcuts_group_general">Общие</string>
+    <string name="shortcuts_send">Отправить сообщение</string>
+    <string name="shortcuts_newline">Новая строка</string>
+    <string name="shortcuts_focus_composer">Перейти к полю сообщения</string>
+    <string name="shortcuts_new_session">Новый сеанс</string>
+    <string name="shortcuts_search_sessions">Искать сеансы</string>
+    <string name="shortcuts_toggle_list">Показать или скрыть сеансы</string>
+    <string name="shortcuts_settings">Открыть настройки</string>
+    <string name="shortcuts_close">Закрыть панель или диалог</string>
+    <string name="chat_drop_hint">Перетащите файлы сюда, чтобы прикрепить</string>
+    <!-- ==== Built-in harness runtime (on-device), foreground service notification ==== -->
+    <string name="runtime_notif_installing">Установка harness на этот телефон</string>
+    <string name="runtime_notif_downloading">Загрузка, готово %1$d%%</string>
+    <string name="runtime_notif_unpacking">Распаковка файлов</string>
+    <string name="runtime_notif_starting">Запуск harness на этом телефоне</string>
+    <string name="runtime_notif_running">Harness работает на этом телефоне</string>
+    <string name="runtime_notif_running_text">Ожидает подключений на порту %1$d</string>
     <string name="hostswitcher_title">Бэкенды</string>
     <string name="hostswitcher_empty">Других сохранённых бэкендов нет. Подключитесь к одному с экрана подключения, и он появится здесь.</string>
     <string name="hostswitcher_current">Текущий</string>

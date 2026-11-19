@@ -8,7 +8,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
+import com.labteto.dshmobile.ui.components.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +21,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import com.labteto.dshmobile.ui.components.DsButtonSize
 import com.labteto.dshmobile.ui.components.FeatherIcons
 import com.labteto.dshmobile.update.UpdateChecker
+import com.labteto.dshmobile.ui.update.LocalUpdateUi
+import com.labteto.dshmobile.ui.update.UpdatePanel
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -140,10 +142,18 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
     val store = rememberSessionStore()
     val plugins by store.plugins.collectAsStateWithLifecycle()
     val pluginManagementAvailable by store.pluginManagementAvailable.collectAsStateWithLifecycle()
+    val harnessSettingsAvailable by store.harnessSettingsAvailable.collectAsStateWithLifecycle()
+    val accountAvailable by store.accountAvailable.collectAsStateWithLifecycle()
     val colors = DsTheme.colors
     val toast = rememberDsToast()
     var showDisconnectDialog by remember { mutableStateOf(false) }
-    var pluginsOpen by remember { mutableStateOf(false) }
+    // Saveable: a text size, display size, theme or language change recreates the activity, and the
+    // page should still be open afterwards. The confirmations below are not: they ask about a deletion.
+    var pluginsOpen by rememberSaveable { mutableStateOf(false) }
+    // Saveable for the same reason: Harness settings comes back after the activity is recreated. What
+    // is typed on its pages is not saved (a key entry comes back closed and empty), and the area closes
+    // itself when the harness it was opened for is gone.
+    var harnessSettingsOpen by rememberSaveable { mutableStateOf(false) }
     // Settings and the archive are two different jobs: one is configuration, the other is a list to
     // search and restore from. A tab each keeps the settings reachable without scrolling past a
     // list that can be long, and the archive gets the whole height to be scrolled in.
@@ -202,10 +212,14 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                         tint = colors.labelPrimary,
                     )
                     Spacer(Modifier.width(DsSpacing.small))
+                    // The rest of the row, not the word's own measured width: with the display
+                    // style's negative letter spacing, Arabic shapes a few pixels wider than it
+                    // measures, and "الإعدادات" broke before its last letter.
                     Text(
                         stringResource(R.string.settings_title),
                         style = DsType.display24,
                         color = colors.labelPrimary,
+                        modifier = Modifier.weight(1f),
                     )
                 }
                 DsSegmented(
@@ -268,6 +282,13 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                         style = DsType.caption11,
                         color = colors.labelTertiary,
                     )
+                    WorkStepDisplayPicker(
+                        selected = com.labteto.dshmobile.connection.WorkStepDisplay.of(settings.workStepDisplay),
+                        onSelect = { level -> viewModel.set { it.copy(workStepDisplay = level.key) } },
+                    )
+                    AutoTranslateReasoningRow(settings.autoTranslateReasoning) {
+                        viewModel.set { it.copy(autoTranslateReasoning = !it.autoTranslateReasoning) }
+                    }
                 }
 
                 SettingsCard(stringResource(R.string.settings_connection)) {
@@ -285,6 +306,37 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                         settings.autoConnectLoopback,
                     ) { viewModel.set { it.copy(autoConnectLoopback = !it.autoConnectLoopback) } }
                 }
+
+                // What the connected harness answers with, in any connection mode: its providers
+                // and their keys, written to the harness and kept there.
+                if (connectionState.phase == ConnectionPhase.CONNECTED) {
+                    SettingsCard(stringResource(R.string.models_title)) {
+                        com.labteto.dshmobile.ui.screens.models.ModelsSettingsRow()
+                    }
+                    // What the harness keeps for itself: web search, shell limits, subagents and more.
+                    // Hidden only once the harness has said it has neither the settings call nor the account
+                    // calls, which are the other thing this area holds (DeepSeek sign-in).
+                    if (harnessSettingsAvailable != false || accountAvailable != false) {
+                        SettingsCard(stringResource(R.string.hs_title)) {
+                            com.labteto.dshmobile.ui.screens.harnesssettings.HarnessSettingsRow { harnessSettingsOpen = true }
+                        }
+                    }
+                }
+
+                // The built-in harness first: on a phone that can run it, it is the main way.
+                val builtInState by viewModel.builtIn.state.collectAsStateWithLifecycle()
+                val builtInPort by viewModel.loopbackPort.collectAsStateWithLifecycle()
+                com.labteto.dshmobile.ui.screens.runtime.BuiltInSettingsEntry(
+                    host = viewModel.builtIn,
+                    port = builtInPort,
+                    autoStart = settings.autoStartBuiltInHarness,
+                    onAutoStartChange = { on -> viewModel.set { it.copy(autoStartBuiltInHarness = on) } },
+                    onStart = viewModel::startBuiltIn,
+                    onStop = viewModel::stopBuiltIn,
+                    onRestart = viewModel::restartBuiltIn,
+                    onSetUp = viewModel::setUpBuiltIn,
+                    onUninstall = viewModel::uninstallBuiltIn,
+                )
 
                 // Only on a phone that has Termux: everything on this card goes through it.
                 if (viewModel.termuxInstalled) {
@@ -304,6 +356,8 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                     }
                     LaunchedEffect(Unit) { viewModel.refreshLoopback() }
                     TermuxCard(
+                        // Beside the built-in harness, this card is the Termux one and says so.
+                        title = stringResource(if (builtInState.supported) R.string.runtime_termux_heading else R.string.settings_termux),
                         settings = settings,
                         control = harnessControl,
                         loopback = loopback,
@@ -425,6 +479,13 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                         settings.updateCheckEnabled,
                         stringResource(R.string.settings_update_check_hint),
                     ) { viewModel.set { it.copy(updateCheckEnabled = !it.updateCheckEnabled) } }
+                    // Off unless asked for: it makes the check run in the background, once a day.
+                    ToggleRow(
+                        stringResource(R.string.settings_update_notify),
+                        settings.updateCheckEnabled && settings.updateNotifyEnabled,
+                        stringResource(R.string.settings_update_notify_hint),
+                        enabled = settings.updateCheckEnabled,
+                    ) { viewModel.set { it.copy(updateNotifyEnabled = !it.updateNotifyEnabled) } }
                     // The same check, on demand. Every outcome is reported: a button that says
                     // nothing when there is nothing to offer looks broken.
                     var checking by remember { mutableStateOf(false) }
@@ -462,6 +523,20 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
                             is UpdateChecker.CheckOutcome.Available, is UpdateChecker.CheckOutcome.Dismissed, null -> Unit
                         }
                     }
+                    // The in-app update, beside the version it would replace. It stays here after
+                    // "Later" in the dialog, and shows the same progress the dialog does.
+                    LocalUpdateUi.current?.let { updateUi ->
+                        val latest by updateUi.latest.collectAsStateWithLifecycle()
+                        val updaterState by updateUi.state.collectAsStateWithLifecycle()
+                        (updaterState.update ?: latest)?.let { shown ->
+                            Text(
+                                stringResource(R.string.update_settings_available, shown.version),
+                                style = DsType.std14Strong,
+                                color = colors.labelPrimary,
+                            )
+                            UpdatePanel(shown, updaterState, updateUi)
+                        }
+                    }
                 }
 
                 Spacer(Modifier.height(DsSpacing.xlarge))
@@ -474,6 +549,10 @@ fun SettingsScreen(onClose: () -> Unit, viewModel: SettingsViewModel = hiltViewM
     if (pluginsOpen) {
         if (pluginManagementAvailable == false) plugins?.let { PluginsSheet(it, onDismiss = { pluginsOpen = false }) }
         else com.labteto.dshmobile.ui.screens.main.PluginManagerScreen(onClose = { pluginsOpen = false }, onDraftOpened = { pluginsOpen = false; onClose() })
+    }
+
+    if (harnessSettingsOpen) {
+        com.labteto.dshmobile.ui.screens.harnesssettings.HarnessSettingsScreen(onClose = { harnessSettingsOpen = false })
     }
 
     if (showDisconnectDialog) {
@@ -595,7 +674,7 @@ private fun PluginsCard(inventory: PluginInventorySnapshot, onOpen: () -> Unit) 
 @Composable
 internal fun PluginsSheet(inventory: PluginInventorySnapshot, onDismiss: () -> Unit) {
     val colors = DsTheme.colors
-    var filter by remember { mutableStateOf("") }
+    var filter by rememberSaveable { mutableStateOf("") }
     val matching = remember(inventory, filter) {
         val q = filter.trim().lowercase(Locale.ROOT)
         if (q.isEmpty()) {
@@ -700,6 +779,7 @@ private fun moduleShortName(moduleName: String): String {
  */
 @Composable
 private fun TermuxCard(
+    title: String,
     settings: AppSettings,
     control: HarnessControl,
     loopback: LoopbackStatus,
@@ -711,7 +791,7 @@ private fun TermuxCard(
     onToggleAutoStart: () -> Unit,
 ) {
     val colors = DsTheme.colors
-    SettingsCard(stringResource(R.string.settings_termux)) {
+    SettingsCard(title) {
         LabelledValue(stringResource(R.string.settings_termux_status), loopbackStatusText(loopback, control, port))
         (control as? HarnessControl.Failed)?.let { failed ->
             Text(harnessFailureMessage(failed.reason), style = DsType.caption11, color = colors.warnLabel)

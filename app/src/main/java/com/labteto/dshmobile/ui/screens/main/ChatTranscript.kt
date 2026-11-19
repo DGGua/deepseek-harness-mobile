@@ -49,6 +49,7 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.labteto.dshmobile.R
 import com.labteto.dshmobile.core.session.AssistantMessageNode
@@ -59,6 +60,7 @@ import com.labteto.dshmobile.ui.components.DsButton
 import com.labteto.dshmobile.ui.components.DsButtonSize
 import com.labteto.dshmobile.ui.components.DsButtonVariant
 import com.labteto.dshmobile.ui.components.EmptyHero
+import com.labteto.dshmobile.ui.components.clearSelectionOnTap
 import com.labteto.dshmobile.ui.components.skeleton
 import com.labteto.dshmobile.ui.theme.DsTheme
 import com.labteto.dshmobile.ui.theme.DsType
@@ -139,6 +141,11 @@ internal fun ChatTranscript(
     listState: LazyListState,
     onLoadOlder: () -> Unit,
     modifier: Modifier = Modifier,
+    /**
+     * Extra room at each side, so the rows keep to a reading width centred in a wide pane while the
+     * list itself still spans the pane and scrolls from anywhere on it.
+     */
+    gutter: Dp = 0.dp,
     /** A message the reader picked out of the history sheet, still waiting to be scrolled to. */
     jumpToSeq: Long? = null,
     onJumpConsumed: () -> Unit = {},
@@ -160,15 +167,23 @@ internal fun ChatTranscript(
     //
     // Reversed here rather than at the call site: the fold's natural order is oldest-first, and
     // that is the order every other reader of `nodes` wants.
-    val rows = remember(conversation?.nodes, context.running) {
+    val policy = context.presentation.policy
+    val rows = remember(conversation?.nodes, context.running, policy) {
         val nodes = conversation?.nodes.orEmpty()
-        foldProcessRows(
-            rows = groupToolRows(renderableChatNodes(nodes, context.running)),
-            // Read from the unfiltered nodes: a turn start draws no row, so the row list alone
-            // cannot say where one turn ends and the next begins.
-            turnStarts = nodes.filterIsInstance<TurnStartNode>().map { it.seq }.sorted(),
-            running = context.running,
-        ).asReversed()
+        // Read from the unfiltered nodes: a turn start draws no row, so the row list alone
+        // cannot say where one turn ends and the next begins.
+        val turnStarts = nodes.filterIsInstance<TurnStartNode>().map { it.seq }.sorted()
+        // The work-step level decides how much of the above is folded: whether tool calls sit in
+        // groups, and whether a finished turn's steps fold behind one row. It reshapes the rows
+        // only; the nodes underneath, and what the harness stored, are untouched.
+        val grouped = applyStepGrouping(
+            groupToolRows(renderableChatNodes(nodes, context.running)),
+            policy.stepGrouping,
+            turnStarts,
+            context.running,
+        )
+        (if (policy.foldCompletedTurns) foldProcessRows(grouped, turnStarts, context.running) else grouped)
+            .asReversed()
     }
     val hasMore = conversation?.hasMore == true
     val sessionId = conversation?.sessionId
@@ -203,7 +218,8 @@ internal fun ChatTranscript(
     // be read until it settles. Scrolled past it (index > 0) the reversed layout already holds
     // still. Freezing the row list while following is off covers the first case too: the page stops
     // where the reader left it, and the tail catches up in one step when they come back down.
-    var frozenRows by remember(sessionId) { mutableStateOf<List<TranscriptRow>?>(null) }
+    // Keyed on the level too: a page frozen under one level must not outlive a change of level.
+    var frozenRows by remember(sessionId, policy) { mutableStateOf<List<TranscriptRow>?>(null) }
     val displayRows = frozenRows?.let { frozen ->
         // Paging adds rows at the far (oldest) end after the freeze, and those must still appear,
         // or a reader scrolling to the top of the frozen page meets a Load older row that never
@@ -237,7 +253,7 @@ internal fun ChatTranscript(
     }
     // Captured where the reader came to rest, not on every delta: the effect is keyed on the
     // following flag alone, so `rows` here is the page they left.
-    LaunchedEffect(followTail) {
+    LaunchedEffect(followTail, policy) {
         frozenRows = if (followTail) null else rows
     }
     LaunchedEffect(itemCount, followTail, followStreaming) {
@@ -392,11 +408,12 @@ internal fun ChatTranscript(
         listState.animateScrollToItem(0)
     }
 
-    Box(modifier.fillMaxSize()) {
+    // A tap anywhere on the transcript ends a text selection made in it (issue #90); see the modifier.
+    Box(modifier.fillMaxSize().clearSelectionOnTap()) {
     LazyColumn(
         state = listState,
         modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp),
+        contentPadding = PaddingValues(horizontal = 16.dp + gutter, vertical = 10.dp),
         // Newest first, so the row the viewport anchors on is the one that grows.
         reverseLayout = true,
         // Still bottom-aligned: a transcript shorter than the viewport belongs above the composer,
@@ -451,7 +468,7 @@ internal fun ChatTranscript(
                 Column(arrival) {
                     when (row) {
                         is TranscriptRow.Message -> ChatNodeItem(node = row.node, context = context)
-                        is TranscriptRow.Tools -> ToolGroupRow(row.calls, context)
+                        is TranscriptRow.Tools -> ToolsRowContent(row, context)
                         is TranscriptRow.Context -> ContextGroupRow(row.nodes, context)
                         is TranscriptRow.Process -> ProcessRow(row, context)
                     }

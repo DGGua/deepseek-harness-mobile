@@ -3,7 +3,7 @@ package com.labteto.dshmobile.ui.components
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
+import com.labteto.dshmobile.ui.components.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -277,7 +277,6 @@ internal fun QuestionsPanel(
             DsButton(stringResource(R.string.ux_b_view_questions), { expanded = true }, variant = DsButtonVariant.Ghost)
             DsBottomSheet(
                 title = stringResource(R.string.harness_questions), onDismiss = { expanded = false },
-                trailing = { DsIconButton(Icons.Filled.Close, stringResource(R.string.common_close), { expanded = false }) },
             ) {
                 BoxWithConstraints(Modifier.fillMaxWidth()) {
                     Card(minOf(maxHeight, 600.dp), compact = false, inSheet = true)

@@ -65,10 +65,29 @@ internal fun renderableChatNodes(nodes: List<ChatNode>, running: Boolean): List<
     // the command ledger, and so does this. The marker the rewind appended stays, drawn as a
     // divider rather than an empty user bubble.
     val cut = RewindCuts.hiddenSeqs(nodes)
+    // A reader's command draws one system line from its `command/run`; the `command/done` that
+    // settles it is told inside that line, so it must not draw a second row.
+    val folded = foldedCommandDones(nodes)
+    val stopped = turnsStoppedByTurnEnd(nodes)
     return nodes.filter { node ->
-        node.seq !in cut && ((node is UserMessageNode && node.isRewindMarker) || node.rendersContent(running, knownToolCallIds))
+        node.seq !in cut && node.seq !in folded &&
+            ((node is UserMessageNode && node.isRewindMarker) || node.rendersContent(running, knownToolCallIds, stopped))
     }
 }
+
+/**
+ * The turns whose own `turn/end` (`aborted` or `interrupted`) draws the "Stopped" pill.
+ *
+ * The fold also marks the turn's last assistant message as cut short, and that message used to draw
+ * a "Stopped" pill of its own, so one stopped turn showed the pill twice: above its tool calls and
+ * again below them. The turn's end says it once, where the turn stopped.
+ */
+internal fun turnsStoppedByTurnEnd(nodes: List<ChatNode>): Set<Int> =
+    nodes.filterIsInstance<TurnEndNode>().filter { it.reasonKind == "aborted" || it.reasonKind == "interrupted" }
+        .mapTo(HashSet()) { it.turn }
+
+/** Whether a cut-short assistant message draws its own "Stopped" pill, given [turnsStoppedByTurnEnd]. */
+internal fun AssistantMessageNode.showsStoppedPill(stoppedTurns: Set<Int>): Boolean = interrupted && turn !in stoppedTurns
 
 /** The `(empty message)` row `dsh-rewind` appends to mark where the conversation was cut back to. */
 internal val UserMessageNode.isRewindMarker: Boolean get() = sourceKind == REWIND_SOURCE_KIND
@@ -76,6 +95,7 @@ internal val UserMessageNode.isRewindMarker: Boolean get() = sourceKind == REWIN
 internal fun ChatNode.rendersContent(
     running: Boolean = false,
     knownToolCallIds: Set<String> = emptySet(),
+    stoppedTurns: Set<Int> = emptySet(),
 ): Boolean = when (this) {
     // Structure, not content.
     is TurnStartNode -> false
@@ -85,11 +105,11 @@ internal fun ChatNode.rendersContent(
     // draws nothing for (harness 0.1.7's `forked`, or one this build has never seen) cost a gap.
     is TurnEndNode -> reasonKind in DRAWN_TURN_END_KINDS
     // Bookkeeping event types are not "unknown" — they are noise between the tool calls.
-    is OtherNode -> type !in STRUCTURAL_EVENT_TYPES
+    is OtherNode -> drawsInTranscript()
 
     // Content that can still fold to nothing.
     is UserMessageNode -> blocks.any { it.kind == "image" } || displayText().isNotBlank()
-    is AssistantMessageNode -> interrupted || blocks.any { block ->
+    is AssistantMessageNode -> showsStoppedPill(stoppedTurns) || blocks.any { block ->
         when (block.kind) {
             // Before the durable call arrives, the provisional block is the argument preview.
             "tool-call" -> showsToolPreview(block, running, knownToolCallIds)
@@ -109,7 +129,7 @@ internal fun ChatNode.rendersContent(
     // Always draws.
     is ToolCallNode -> true
     is PlanModeNode -> true
-    is CompactionNode -> true
+    is CompactionNode -> drawsInTranscript()
     is RetryNode -> true
     is TurnErrorNode -> true
     is CommandNode -> true
@@ -117,6 +137,41 @@ internal fun ChatNode.rendersContent(
     is TitleNode -> false
     is SubagentNode -> true
 }
+
+/**
+ * Whether the transcript draws an [OtherNode].
+ *
+ * Two kinds stay out. Structural bookkeeping frames the transcript rather than filling it. And a
+ * record the harness marked `ignorable` that this build has no opinion about is, by the harness's
+ * own contract, one a reader may skip: every `plugin:` record is written that way, so the
+ * translator's `plugin:translator/request` and `plugin:translator/result` would otherwise print as
+ * raw JSON rows in the middle of a conversation.
+ *
+ * A type the harness did *not* mark skippable and this build has never seen stays visible, which is
+ * the compatibility contract. Shared by [rendersContent] and [ChatNodeItem] so the list filter and
+ * the renderer cannot disagree. Trajectory does not use it: it is where a skipped record is found.
+ */
+internal fun OtherNode.drawsInTranscript(): Boolean = type !in STRUCTURAL_EVENT_TYPES && !isSkippableUnknown
+
+/** The compaction event type that carries the summary, the only one with anything to read. */
+internal const val COMPACTION_SUMMARY_KIND = "compaction/summary"
+
+/**
+ * Whether the transcript draws a [CompactionNode].
+ *
+ * One compaction is several events: `compaction/start` and `compaction/end` bracket it (they share
+ * a `compactionId`) and `compaction/summary` between them holds the text; a model-free
+ * `compaction/prune` has no text at all. Drawing every one of them put three look-alike
+ * "Compacted: Summary" rows in the transcript per compaction, two of them empty, plus another empty
+ * one per prune. Only the summary draws, so a compaction is one row, as in the harness's own client.
+ *
+ * A `compaction/end` that carries an `error` stays out too. Nothing in this build reports an
+ * automatic compaction that failed, but the row it used to draw said "Compacted", which was untrue,
+ * and a `/compact` that fails already says so in its own system line.
+ *
+ * The nodes themselves stay in the fold, so the journal and Trajectory still have every event.
+ */
+internal fun CompactionNode.drawsInTranscript(): Boolean = kind == COMPACTION_SUMMARY_KIND
 
 /** The `turn/end` reasons [ChatNodeItem] draws something for. */
 internal val DRAWN_TURN_END_KINDS = setOf("aborted", "interrupted", "error", "max-tokens")
